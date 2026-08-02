@@ -92,6 +92,7 @@ describe("release package", () => {
     const [manifest] = JSON.parse(stdout);
     const paths = manifest.files.map((file: { path: string }) => file.path);
     expect(paths).toEqual([
+      "LICENSE",
       "README.md",
       "dist/index.d.ts",
       "dist/index.js",

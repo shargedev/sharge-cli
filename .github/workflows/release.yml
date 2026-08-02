@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  install-smoke:
+    name: install-smoke (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node-version: 20
+          - os: ubuntu-latest
+            node-version: 22
+          - os: macos-latest
+            node-version: 22
+          - os: windows-latest
+            node-version: 22
+    steps:
+      - name: Check out release
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - run: npm test -- test/package-install.test.ts
+      - run: npm run build
+      - run: npm pack --dry-run
+
+  publish:
+    name: publish-npm
+    needs:
+      - install-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out release
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up Node.js for trusted publishing
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Verify release tag
+        shell: bash
+        run: |
+          package_version="$(node -p 'require("./package.json").version')"
+          if [[ "v${package_version}" != "${GITHUB_REF_NAME}" ]]; then
+            printf 'Release tag %s does not match package version %s.\n' "${GITHUB_REF_NAME}" "${package_version}" >&2
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run contract:test
+      - run: npm run skills:validate
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org
+      - run: npm pack --dry-run --json
+      - name: Publish to npm with trusted publishing
+        run: npm publish
+      - name: Verify registry version
+        shell: bash
+        run: |
+          package_version="$(node -p 'require("./package.json").version')"
+          published_version="$(npm view "@sharge/cli@${package_version}" version --registry=https://registry.npmjs.org)"
+          test "${published_version}" = "${package_version}"

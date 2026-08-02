@@ -1,7 +1,9 @@
 # sharge CLI
 
 [![npm version](https://img.shields.io/npm/v/@sharge/cli.svg)](https://www.npmjs.com/package/@sharge/cli)
+[![CI](https://github.com/shargedev/sharge-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/shargedev/sharge-cli/actions/workflows/ci.yml)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-339933.svg)](https://nodejs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 Sharge Open Platform 的官方命令行客户端，面向 AI Agent 设计，也为人类提供清晰的登录、配置与故障处理体验。
 
@@ -219,6 +221,7 @@ npx skills add shargedev/sharge-cli --list
 - 不要把 API Key 放入命令行、prompt、日志、Issue 或聊天记录。
 - 本地 settings 与 JSONL 日志位于 `~/.sharge/`；日志自动脱敏并轮转。
 - 下载重定向不会向跨 origin 目标转发 Authorization。
+- CLI 不收集产品使用遥测；诊断信息仅写入用户本地的脱敏日志。
 
 ## 文档
 
@@ -245,3 +248,5 @@ npm pack --dry-run --json
 ```
 
 提交问题或建议前，请先搜索现有 [Issues](https://github.com/shargedev/sharge-cli/issues)。代码贡献可通过 [Pull Request](https://github.com/shargedev/sharge-cli/pulls) 提交；涉及公共命令、输入输出或安全语义的改动，应先更新 `docs/` 并补充测试。
+
+参见 [贡献指南](./CONTRIBUTING.md)、[安全策略](./SECURITY.md)、[变更记录](./CHANGELOG.md)和 [MIT License](./LICENSE)。

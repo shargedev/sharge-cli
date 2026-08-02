@@ -2,7 +2,9 @@
   "name": "@sharge/cli",
   "version": "0.2.0",
   "description": "面向 Agent 的 Sharge Open Platform CLI",
+  "license": "MIT",
   "type": "module",
+  "packageManager": "npm@11.6.2",
   "engines": {
     "node": ">=20"
   },
@@ -13,6 +15,10 @@
   "homepage": "https://github.com/shargedev/sharge-cli#readme",
   "bugs": {
     "url": "https://github.com/shargedev/sharge-cli/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "keywords": [
     "sharge",
@@ -42,16 +48,19 @@
   },
   "dependencies": {
     "@jq-tools/jq": "^0.0.11",
-    "lossless-json": "^4.3.0",
-    "zod": "^4.3.6"
+    "lossless-json": "^4.3.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.12",
-    "@types/node": "^25.6.0",
-    "@vitest/coverage-v8": "^4.1.4",
+    "@biomejs/biome": "2.4.12",
+    "@types/node": "^25.9.5",
+    "@vitest/coverage-v8": "^4.1.10",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.4",
-    "yaml": "^2.8.2"
+    "vitest": "^4.1.10",
+    "yaml": "^2.9.0"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
   }
 }

@@ -1,0 +1,42 @@
+name: Bug report
+description: 报告可复现的 CLI 问题
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: 请先移除 API Key、用户数据、日志中的敏感内容和非公开服务地址。
+  - type: input
+    id: version
+    attributes:
+      label: sharge 版本
+      description: 运行 `sharge version` 获取。
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 运行环境
+      description: 操作系统、Node.js 版本和终端。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 提供最小、可重复的步骤，不要粘贴凭据。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+    validations:
+      required: true
