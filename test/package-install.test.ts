@@ -10,7 +10,6 @@ import { main } from "../src/cli.js";
 const exec = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const cleanupPaths: string[] = [];
-const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
 
 afterEach(async () => {
   await Promise.all(
@@ -81,9 +80,12 @@ describe("release package", () => {
     const workspace = await temporaryDirectory("sharge-package-");
     const prefix = join(workspace, "prefix");
     const home = join(workspace, "home");
+    const npmCli = process.env.npm_execpath;
+    expect(npmCli).toBeDefined();
+    if (!npmCli) throw new Error("npm_execpath is required for package tests");
     const { stdout } = await exec(
-      npmExecutable,
-      ["pack", "--json", "--pack-destination", workspace],
+      process.execPath,
+      [npmCli, "pack", "--json", "--pack-destination", workspace],
       {
         cwd: repositoryRoot,
         env: { ...process.env, HOME: home },
@@ -108,8 +110,16 @@ describe("release package", () => {
 
     const tarball = join(workspace, manifest.filename);
     await exec(
-      npmExecutable,
-      ["install", "--global", "--prefix", prefix, "--ignore-scripts", tarball],
+      process.execPath,
+      [
+        npmCli,
+        "install",
+        "--global",
+        "--prefix",
+        prefix,
+        "--ignore-scripts",
+        tarball,
+      ],
       {
         cwd: workspace,
         env: { ...process.env, HOME: home },
@@ -126,11 +136,13 @@ describe("release package", () => {
     const version = await exec(binary, ["version"], {
       cwd: workspace,
       env: { ...process.env, HOME: home },
+      shell: process.platform === "win32",
     });
     expect(version.stdout.trim()).toBe(packageJson.version);
     const help = await exec(binary, ["--help"], {
       cwd: workspace,
       env: { ...process.env, HOME: home },
+      shell: process.platform === "win32",
     });
     expect(help.stdout).toContain("面向 Agent 的 Sharge 开放平台命令行工具");
   }, 30_000);
