@@ -1,0 +1,6519 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Open Platform",
+    "description": "## 接入指南\n\n所有业务接口均以 `/open-api/v1` 为前缀。Open API 只对现有业务能力做稳定的二次封装，\n不会创建录音、AI Daily 日记或 Quick Note 等平台内受控资源。\n\n### 认证\n\n在请求头中携带 `Authorization: Bearer <credential>`。`credential` 可以是用户登录后\n获得的 JWT，也可以是开放平台或 CLI 授权流程创建的 API Key。API Key 明文只在创建成功时\n返回一次，请在客户端安全保存。可调用 `GET /auth/status`\n检查当前凭证、授权范围和服务端时间。\n\n### Scope\n\n每个 operation 的 `x-required-scopes` 会列出所需权限；空数组表示只要求有效凭证。\n`GET /auth/scopes` 返回全部 Scope 及当前凭证是否已获授权。API Key 的 Scope 是创建或更新时\n保存的快照；权限不足返回 `403`，客户端应重新发起授权，而不是反复重试。\n\n### 响应结构\n\nJSON 接口统一返回 `{ \"code\": 0, \"message\": \"ok\", \"data\": ... }`。\nHTTP 状态码表达协议结果，`code` 和 `message` 提供机器判断及排障信息。媒体下载接口例外：\n成功时返回 `307`，客户端需要跟随 `Location` 跳转，且不要长期缓存临时下载地址。\n\n### 分页\n\n列表接口使用游标分页。首次请求不传游标或使用接口声明的默认值；\n后续请求使用响应中的 `next_cursor`，并以 `has_more` 判断是否继续。\n游标是不透明的定位值，不应由客户端自行计算。\n\n### 时间与时区\n\n`datetime` 字段采用 ISO 8601。请求中的时间必须带明确时区偏移，例如\n`2026-07-30T09:00:00+08:00`。日历接口可使用 IANA 时区名（如 `Asia/Shanghai`）或\nUTC 偏移；日期范围的起止边界以各接口说明为准。\n\n### 错误与排障\n\n常见错误包括：`400` 参数或业务约束不满足、`401` 凭证无效、`403` Scope 不足、\n`404` 资源不存在、`429` 触发限流、`500` 服务异常。收到 `429` 时应使用指数退避。\n每个响应都会携带或关联 `X-Request-Id`；反馈问题时请提供该值，便于服务端通过日志和 trace\n定位请求。除 `429` 和明确的临时服务错误外，不要对写操作进行无界自动重试。",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/auth/status": {
+      "get": {
+        "tags": [
+          "open_platform_auth"
+        ],
+        "summary": "检查当前凭证",
+        "description": "**权限：** `有效凭证，无额外 Scope`\n\n**使用说明：** 在客户端启动、授权完成或收到 401/403 后调用，用于确认凭证类型、用户和当前权限快照。\n\n**返回与行为：** API Key 认证会返回 Key 的来源、客户端和最近使用信息；JWT 认证的 `api_key` 为 null。",
+        "operationId": "get_open_auth_status_auth_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiAuthStatusDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "x-required-scopes": []
+      }
+    },
+    "/auth/scopes": {
+      "get": {
+        "tags": [
+          "open_platform_auth"
+        ],
+        "summary": "获取全部 Scope",
+        "description": "**权限：** `有效凭证，无额外 Scope`\n\n**使用说明：** 读取服务端当前支持的完整 Scope 目录，并通过 `granted` 判断当前凭证是否拥有每项权限。\n\n**返回与行为：** 目录顺序稳定，可用于授权页面展示；客户端不应把本地缓存当作服务端权限判断依据。",
+        "operationId": "get_open_auth_scopes_auth_scopes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_list_OpenApiScopeCatalogItemDTO__"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "x-required-scopes": []
+      }
+    },
+    "/user-memory/quick-notes": {
+      "get": {
+        "tags": [
+          "open_platform_quick_notes"
+        ],
+        "summary": "分页查询 Quick Note",
+        "description": "**权限：** `quick_notes:read`\n\n**使用说明：** 按创建时间游标分页读取 Quick Note，可组合搜索词和带时区的创建时间范围进行过滤。\n\n**返回与行为：** 返回 `next_cursor` 和 `has_more`；搜索结果会标明命中字段及对应文本。",
+        "operationId": "list_open_quick_notes_user_memory_quick_notes_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Cursor"
+            },
+            "description": "分页游标。首次请求按接口默认值调用，后续传入上一页响应的 next_cursor。"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "本次最多返回的记录数；具体最小值、最大值和默认值见字段约束。"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            },
+            "description": "Quick Note 搜索词；为空时不按标题或正文过滤。"
+          },
+          {
+            "name": "created_at_start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created At Start"
+            },
+            "description": "创建时间下界（含），必须是带明确时区的 ISO 8601 时间。"
+          },
+          {
+            "name": "created_at_end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created At End"
+            },
+            "description": "创建时间上界（不含），必须带明确时区且不得早于 created_at_start。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiQuickNotePageDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "quick_notes:read"
+        ]
+      }
+    },
+    "/user-memory/quick-notes/{note_id}": {
+      "get": {
+        "tags": [
+          "open_platform_quick_notes"
+        ],
+        "summary": "获取 Quick Note 详情",
+        "description": "**权限：** `quick_notes:read`\n\n**使用说明：** 使用 Quick Note 数字 ID 获取单条详情，包括已有位置与经纬度，并查看当前可下载的媒体类型和相对下载路径。\n\n**返回与行为：** 仅能读取当前用户的资源；资源不存在或不属于当前用户时返回 404。",
+        "operationId": "get_open_quick_note_user_memory_quick_notes__note_id__get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            },
+            "description": "Quick Note 的数字 ID，只能访问当前认证用户拥有的资源。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiQuickNoteDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "quick_notes:read"
+        ]
+      },
+      "patch": {
+        "tags": [
+          "open_platform_quick_notes"
+        ],
+        "summary": "修改 Quick Note",
+        "description": "**权限：** `quick_notes:write`\n\n**使用说明：** 只修改标题和正文；请求中至少显式提供一个字段，字段值可为 null 以清空对应内容。\n\n**返回与行为：** 采用部分更新语义，未提供的字段保持不变；开放平台不提供 Quick Note 创建能力。",
+        "operationId": "update_open_quick_note_user_memory_quick_notes__note_id__patch",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            },
+            "description": "Quick Note 的数字 ID，只能访问当前认证用户拥有的资源。"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuickNoteRequestDTO"
+              }
+            }
+          },
+          "description": "请求体字段说明见下方 Schema。未声明的字段会被拒绝；请同时遵守本 operation 的业务约束。"
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiQuickNoteDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "quick_notes:write"
+        ]
+      },
+      "delete": {
+        "tags": [
+          "open_platform_quick_notes"
+        ],
+        "summary": "删除 Quick Note",
+        "description": "**权限：** `quick_notes:write`\n\n**使用说明：** 按 ID 删除当前用户的 Quick Note。调用前应向最终用户明确展示删除目标并取得确认。\n\n**返回与行为：** 删除成功返回空 `data`；资源不存在时返回 404，该操作不是创建或更新接口。",
+        "operationId": "delete_open_quick_note_user_memory_quick_notes__note_id__delete",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            },
+            "description": "Quick Note 的数字 ID，只能访问当前认证用户拥有的资源。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "quick_notes:write"
+        ]
+      }
+    },
+    "/user-memory/quick-notes/{note_id}/media/{media_type}/download": {
+      "get": {
+        "tags": [
+          "open_platform_quick_notes"
+        ],
+        "summary": "下载 Quick Note 媒体",
+        "description": "**权限：** `quick_notes:read`\n\n**使用说明：** 指定 Quick Note ID 和媒体类型获取临时下载地址，客户端必须允许跟随 307 重定向。\n\n**返回与行为：** 成功响应不是 JSON；临时地址不可持久化，媒体尚未就绪或上游不可用时可能返回 502。",
+        "operationId": "download_open_quick_note_media_user_memory_quick_notes__note_id__media__media_type__download_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "note_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Note Id"
+            },
+            "description": "Quick Note 的数字 ID，只能访问当前认证用户拥有的资源。"
+          },
+          {
+            "name": "media_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "audio",
+                "image",
+                "video"
+              ],
+              "type": "string",
+              "title": "Media Type"
+            },
+            "description": "需要下载的媒体类型；必须出现在该 Quick Note 的 available_media_types 中。"
+          }
+        ],
+        "responses": {
+          "307": {
+            "description": "重定向到 Quick Note 媒体临时下载地址",
+            "headers": {
+              "Location": {
+                "description": "需要立即跟随的临时媒体下载 URL；不要持久化该地址。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "固定为 `private, no-store`，禁止共享或持久缓存。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Disposition": {
+                "description": "建议的下载方式及文件名。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Quick note media unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "quick_notes:read"
+        ]
+      }
+    },
+    "/ai-calendar/events/monthly": {
+      "get": {
+        "tags": [
+          "open_platform_calendar"
+        ],
+        "summary": "获取月度日历索引",
+        "description": "**权限：** `calendar:read`\n\n**使用说明：** 按年、月和时区读取正式日历事件及其月内实例，可按事件来源过滤。\n\n**返回与行为：** `dates` 以日号组织实例，`events` 是实例引用的事件字典；不包含草稿事件。",
+        "operationId": "get_open_calendar_events_monthly_ai_calendar_events_monthly_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2100,
+              "minimum": 1970,
+              "title": "Year"
+            },
+            "description": "四位公历年份；接口会结合 month 或报告周期查询。"
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 12,
+              "minimum": 1,
+              "title": "Month"
+            },
+            "description": "公历月份，取值 1–12。"
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Timezone"
+            },
+            "description": "IANA 时区名或 UTC 偏移；不传时使用客户端时间推导出的默认时区。"
+          },
+          {
+            "name": "source_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "manual",
+                "quick_note",
+                "audio_recorded",
+                "all"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Source Type"
+            },
+            "description": "日历事件来源过滤条件；all 表示包含所有对外可见来源。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiCalendarMonthlyDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "calendar:read"
+        ]
+      }
+    },
+    "/ai-calendar/events/search": {
+      "get": {
+        "tags": [
+          "open_platform_calendar"
+        ],
+        "summary": "搜索日历事件",
+        "description": "**权限：** `calendar:read`\n\n**使用说明：** 按标题关键词搜索正式日历事件，可限制来源和最大返回数量。\n\n**返回与行为：** 返回匹配事件列表及 `matched_title`；接口不分页，数量由 `limit` 控制。",
+        "operationId": "search_open_calendar_events_ai_calendar_events_search_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Keyword"
+            },
+            "description": "非空搜索关键词；不同业务模块的可搜索字段见 operation 使用说明。"
+          },
+          {
+            "name": "source_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "manual",
+                "quick_note",
+                "audio_recorded",
+                "all"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Source Type"
+            },
+            "description": "日历事件来源过滤条件；all 表示包含所有对外可见来源。"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
+            },
+            "description": "本次最多返回的记录数；具体最小值、最大值和默认值见字段约束。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_list_OpenApiCalendarSearchResultDTO__"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "calendar:read"
+        ]
+      }
+    },
+    "/ai-calendar/events": {
+      "get": {
+        "tags": [
+          "open_platform_calendar"
+        ],
+        "summary": "按时间范围查询日历",
+        "description": "**权限：** `calendar:read`\n\n**使用说明：** 查询半开时间区间内的事件和重复事件实例，起止时间必须携带明确时区且范围不超过 31 天。\n\n**返回与行为：** 返回独立的事件列表和实例列表；`end` 必须严格晚于 `start`，不包含草稿。",
+        "operationId": "get_open_calendar_events_by_range_ai_calendar_events_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Start"
+            },
+            "description": "查询区间起点（含），必须是带明确时区的 ISO 8601 时间。"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "End"
+            },
+            "description": "查询区间终点（不含），必须晚于 start，且整个区间不得超过 31 天。"
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Timezone"
+            },
+            "description": "IANA 时区名或 UTC 偏移；不传时使用客户端时间推导出的默认时区。"
+          },
+          {
+            "name": "source_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "manual",
+                "quick_note",
+                "audio_recorded",
+                "all"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Source Type"
+            },
+            "description": "日历事件来源过滤条件；all 表示包含所有对外可见来源。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiCalendarRangeDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "calendar:read"
+        ]
+      },
+      "post": {
+        "tags": [
+          "open_platform_calendar"
+        ],
+        "summary": "创建日历事件或待办",
+        "description": "**权限：** `calendar:write`\n\n**使用说明：** 创建正式 event 或 todo。时间必须带时区；重复规则使用 RRULE，全天事件需正确设置 `is_all_day`。\n\n**返回与行为：** 成功返回 201 和已持久化事件；该接口复用现有日历业务校验，不创建草稿。",
+        "operationId": "create_open_calendar_event_ai_calendar_events_post",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCalendarEventRequestDTO"
+              }
+            }
+          },
+          "description": "请求体字段说明见下方 Schema。未声明的字段会被拒绝；请同时遵守本 operation 的业务约束。"
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiCalendarEventDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "calendar:write"
+        ]
+      }
+    },
+    "/ai-calendar/events/{event_id}": {
+      "get": {
+        "tags": [
+          "open_platform_calendar"
+        ],
+        "summary": "获取日历事件详情",
+        "description": "**权限：** `calendar:read`\n\n**使用说明：** 使用事件数字 ID 获取一个正式事件的完整属性，包括重复规则、排除日期、提醒和来源。\n\n**返回与行为：** 草稿、其他用户的事件以及不存在的事件统一返回 404。",
+        "operationId": "get_open_calendar_event_ai_calendar_events__event_id__get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Event Id"
+            },
+            "description": "正式日历事件的数字 ID；草稿或其他用户的事件不可访问。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiCalendarEventDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "calendar:read"
+        ]
+      },
+      "put": {
+        "tags": [
+          "open_platform_calendar"
+        ],
+        "summary": "更新日历事件或实例",
+        "description": "**权限：** `calendar:write`\n\n**使用说明：** 提交事件的完整新状态；重复事件可用 `action` 指定全部、单个实例或当前及未来实例。\n\n**返回与行为：** `action` 为 instance/future 时必须提供 `instance_id`；结果分别列出创建、更新和删除的事件。",
+        "operationId": "update_open_calendar_event_ai_calendar_events__event_id__put",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Event Id"
+            },
+            "description": "正式日历事件的数字 ID；草稿或其他用户的事件不可访问。"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCalendarEventRequestDTO"
+              }
+            }
+          },
+          "description": "请求体字段说明见下方 Schema。未声明的字段会被拒绝；请同时遵守本 operation 的业务约束。"
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiCalendarUpdateResultDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "calendar:write"
+        ]
+      },
+      "delete": {
+        "tags": [
+          "open_platform_calendar"
+        ],
+        "summary": "删除日历事件或实例",
+        "description": "**权限：** `calendar:write`\n\n**使用说明：** 删除整个事件、当前重复实例或当前及未来实例；实例级删除需要传递对应 `instance_id`。\n\n**返回与行为：** 结果返回受影响事件集合。删除范围由 `type` 决定，客户端应先向用户确认。",
+        "operationId": "delete_open_calendar_event_ai_calendar_events__event_id__delete",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Event Id"
+            },
+            "description": "正式日历事件的数字 ID；草稿或其他用户的事件不可访问。"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "current",
+                "future"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Type"
+            },
+            "description": "重复事件删除范围：all 删除全部，current 仅当前实例，future 为当前及未来实例。"
+          },
+          {
+            "name": "instance_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Instance Id"
+            },
+            "description": "重复事件实例 ID；执行 current 或 future 范围操作时用于定位起始实例。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiCalendarUpdateResultDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "calendar:write"
+        ]
+      }
+    },
+    "/ai-calendar/todos/status": {
+      "patch": {
+        "tags": [
+          "open_platform_calendar"
+        ],
+        "summary": "批量更新待办状态",
+        "description": "**权限：** `calendar:write`\n\n**使用说明：** 批量将待办标记为已完成或未完成；两个 ID 集合至少提供一个且不能包含相同 ID。\n\n**返回与行为：** 只接受正式 todo，普通 event 会返回 400；响应回显实际请求的两个 ID 集合。",
+        "operationId": "update_open_calendar_todo_status_ai_calendar_todos_status_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTodoStatusRequestDTO"
+              }
+            }
+          },
+          "required": true,
+          "description": "请求体字段说明见下方 Schema。未声明的字段会被拒绝；请同时遵守本 operation 的业务约束。"
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_UpdateTodoStatusResultDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "x-required-scopes": [
+          "calendar:write"
+        ]
+      }
+    },
+    "/voicemaster/recordings": {
+      "get": {
+        "tags": [
+          "open_platform_voicemaster"
+        ],
+        "summary": "分页查询录音",
+        "description": "**权限：** `voicemaster:read`\n\n**使用说明：** 按游标、本地日期、录音类型和排序条件分页读取平台已经创建的普通录音。日期优先按 timezone 解释，未提供时使用 X-Client-Date 的时区。\n\n**返回与行为：** 返回双向游标及 `has_more`；开放平台不会提交转录，也不提供录音创建接口。",
+        "operationId": "list_open_recordings_voicemaster_recordings_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            },
+            "description": "分页游标。首次请求按接口默认值调用，后续传入上一页响应的 next_cursor。"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "录音分页大小，取值 1–50。"
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "forward",
+                "backward"
+              ],
+              "type": "string",
+              "default": "forward",
+              "title": "Direction"
+            },
+            "description": "相对 cursor 的翻页方向：forward 向后读取，backward 向前读取。"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            },
+            "description": "录音本地日期过滤下界（含），格式为 YYYY-MM-DD。"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            },
+            "description": "录音本地日期过滤上界（含），不得早于 start_date。"
+          },
+          {
+            "name": "timezone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Timezone"
+            },
+            "description": "IANA 时区名或 UTC 偏移；不传时使用客户端时间推导出的默认时区。"
+          },
+          {
+            "name": "recording_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ordinary",
+                    "call",
+                    "app_related"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Recording Type"
+            },
+            "description": "录音类型过滤条件；不传时包含全部允许对外读取的录音类型。"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "created_at",
+                "updated_at",
+                "timestamp",
+                "id"
+              ],
+              "type": "string",
+              "default": "timestamp",
+              "title": "Sort By"
+            },
+            "description": "录音排序字段；稳定翻页时应在连续请求中保持不变。"
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "desc",
+              "title": "Sort Order"
+            },
+            "description": "排序方向：asc 升序，desc 降序。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiRecordingPageDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "voicemaster:read"
+        ]
+      }
+    },
+    "/voicemaster/recordings/search": {
+      "get": {
+        "tags": [
+          "open_platform_voicemaster"
+        ],
+        "summary": "搜索录音",
+        "description": "**权限：** `voicemaster:read`\n\n**使用说明：** 按关键词搜索录音标题和总结，可按录音类型、语言及总结模板过滤。\n\n**返回与行为：** 返回命中字段、命中文本、结果语言和总结模板；接口不分页，最大返回数由 `limit` 控制。",
+        "operationId": "search_open_recordings_voicemaster_recordings_search_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Keyword"
+            },
+            "description": "非空搜索关键词；不同业务模块的可搜索字段见 operation 使用说明。"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "本次最多返回的记录数；具体最小值、最大值和默认值见字段约束。"
+          },
+          {
+            "name": "recording_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ordinary",
+                    "call",
+                    "app_related"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Recording Type"
+            },
+            "description": "录音类型过滤条件；不传时包含全部允许对外读取的录音类型。"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Language"
+            },
+            "description": "总结语言过滤值；不传时沿用业务层默认版本选择规则。"
+          },
+          {
+            "name": "summary_template_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Summary Template Id"
+            },
+            "description": "总结模板 ID；不传时沿用业务层默认版本选择规则。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_list_OpenApiRecordingSearchDTO__"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "voicemaster:read"
+        ]
+      }
+    },
+    "/voicemaster/recordings/{recording_id}": {
+      "get": {
+        "tags": [
+          "open_platform_voicemaster"
+        ],
+        "summary": "获取录音详情",
+        "description": "**权限：** `voicemaster:read`\n\n**使用说明：** 使用录音数字 ID 一次获取基础元数据、完整转写、分段、各语言总结概览、日历内容标记、安全高光、说话人映射和音频下载相对路径。\n\n**返回与行为：** 高光不含原始媒体路径，也不直接返回 Calendar 事件；资源不可见或不存在时返回 404。",
+        "operationId": "get_open_recording_voicemaster_recordings__recording_id__get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recording Id"
+            },
+            "description": "录音的数字 ID，只能访问当前认证用户拥有且允许对外读取的录音。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiRecordingDetailDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "voicemaster:read"
+        ]
+      }
+    },
+    "/voicemaster/recordings/{recording_id}/audio/download": {
+      "get": {
+        "tags": [
+          "open_platform_voicemaster"
+        ],
+        "summary": "下载录音音频",
+        "description": "**权限：** `voicemaster:read`\n\n**使用说明：** 按录音 ID 获取受信任存储域名上的临时音频地址，客户端必须允许跟随 307 重定向。\n\n**返回与行为：** 成功响应不是 JSON 且禁止缓存；地址无效、域名不受信任或音频不存在时返回 404。",
+        "operationId": "download_open_recording_audio_voicemaster_recordings__recording_id__audio_download_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recording_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recording Id"
+            },
+            "description": "录音的数字 ID，只能访问当前认证用户拥有且允许对外读取的录音。"
+          }
+        ],
+        "responses": {
+          "307": {
+            "description": "重定向到录音音频临时下载地址",
+            "headers": {
+              "Location": {
+                "description": "需要立即跟随的临时媒体下载 URL；不要持久化该地址。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "固定为 `private, no-store`，禁止共享或持久缓存。",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Disposition": {
+                "description": "建议的下载方式及文件名。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "voicemaster:read"
+        ]
+      }
+    },
+    "/ai-daily/reports/daily": {
+      "get": {
+        "tags": [
+          "open_platform_ai_daily"
+        ],
+        "summary": "获取月内日报列表",
+        "description": "**权限：** `ai_daily:read`\n\n**使用说明：** 按年和月读取已生成的日报文档摘要，包括封面、关键词、录音数量和更新时间。\n\n**返回与行为：** 只返回结构化摘要，不返回体积较大的 HTML；正文请调用统一报告详情接口。",
+        "operationId": "list_open_daily_reports_ai_daily_reports_daily_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9999,
+              "minimum": 1900,
+              "title": "Year"
+            },
+            "description": "四位公历年份；接口会结合 month 或报告周期查询。"
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 12,
+              "minimum": 1,
+              "title": "Month"
+            },
+            "description": "公历月份，取值 1–12。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_list_OpenApiDailyReportDocumentDTO__"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "ai_daily:read"
+        ]
+      }
+    },
+    "/ai-daily/reports/search": {
+      "get": {
+        "tags": [
+          "open_platform_ai_daily"
+        ],
+        "summary": "搜索日报",
+        "description": "**权限：** `ai_daily:read`\n\n**使用说明：** 按关键词搜索日报标题和 Markdown 正文，最大返回数由 `limit` 控制。\n\n**返回与行为：** 返回命中字段、命中标题和正文摘录；接口不返回完整 HTML 或 Markdown。",
+        "operationId": "search_open_daily_reports_ai_daily_reports_search_get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "title": "Keyword"
+            },
+            "description": "非空搜索关键词；不同业务模块的可搜索字段见 operation 使用说明。"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "本次最多返回的记录数；具体最小值、最大值和默认值见字段约束。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_list_OpenApiDailyReportSearchDTO__"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "ai_daily:read"
+        ]
+      }
+    },
+    "/ai-daily/reports/{report_type}/{identifier}": {
+      "get": {
+        "tags": [
+          "open_platform_ai_daily"
+        ],
+        "summary": "获取报告详情",
+        "description": "**权限：** `ai_daily:read`\n\n**使用说明：** 在 `ai-daily` 业务命名空间内，按报告类型和期间标识符读取日报、周报或月报详情；日报同时返回 Markdown 正文和字数。\n\n**返回与行为：** 日报标识符为 `YYYYMMDD`，周报为 `YYYYWww`，月报为 `YYYYMM`；周报和月报的 Markdown 字段为 null，所有类型均不返回 HTML。",
+        "operationId": "get_open_report_ai_daily_reports__report_type___identifier__get",
+        "security": [
+          {
+            "OpenPlatformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "report_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly"
+              ],
+              "type": "string",
+              "title": "Report Type"
+            },
+            "description": "AI Daily 报告类型：daily、weekly 或 monthly。"
+          },
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identifier"
+            },
+            "description": "报告周期标识符；格式由 report_type 或当前日报接口决定。"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_OpenApiReportDTO_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "message": "Invalid request"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 401,
+                  "message": "Unauthorized"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 403,
+                  "message": "Insufficient scope"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 404,
+                  "message": "Resource not found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 429,
+                  "message": "Rate limit exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 500,
+                  "message": "Internal Server Error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApiResponse_NoneType_"
+                }
+              }
+            }
+          }
+        },
+        "x-required-scopes": [
+          "ai_daily:read"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateCalendarEventRequestDTO": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "面向用户的补充描述；没有内容时为 null。"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "资源关联的地点文本；没有地点时为 null。"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone",
+            "description": "IANA 时区名或 UTC 偏移。"
+          },
+          "type": {
+            "$ref": "#/components/schemas/EventType",
+            "default": "event",
+            "description": "资源类型；可选值由当前 Schema 的枚举约束定义。"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Time",
+            "description": "开始时间，必须使用带时区的 ISO 8601 格式。"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time",
+            "description": "结束时间，ISO 8601 格式；没有结束时间时为 null。"
+          },
+          "is_all_day": {
+            "type": "boolean",
+            "title": "Is All Day",
+            "default": false,
+            "description": "是否为全天事件。"
+          },
+          "rrule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rrule",
+            "description": "RFC 5545 RRULE 重复规则；非重复事件为 null。"
+          },
+          "enable_alarm": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Alarm",
+            "description": "是否启用日历提醒。"
+          },
+          "trigger_seconds": {
+            "type": "integer",
+            "minimum": -864000,
+            "title": "Trigger Seconds",
+            "default": 0,
+            "description": "相对事件开始时间的提醒偏移秒数，负数表示提前。"
+          },
+          "trigger_description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Description",
+            "description": "提醒时间的用户可读说明；没有说明时为 null。"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "start_time"
+        ],
+        "title": "CreateCalendarEventRequestDTO"
+      },
+      "EventType": {
+        "type": "string",
+        "enum": [
+          "event",
+          "todo"
+        ],
+        "title": "EventType",
+        "description": "事件类型枚举"
+      },
+      "OpenApiAuthStatusApiKeyDTO": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "当前认证 API Key 的数据库记录 ID。"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "面向用户展示的名称。"
+          },
+          "key_prefix": {
+            "type": "string",
+            "title": "Key Prefix",
+            "description": "用于页面识别 API Key 的非敏感前缀，不可用于认证。"
+          },
+          "creation_source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "cli_authorization"
+            ],
+            "title": "Creation Source",
+            "description": "API Key 创建来源：manual 或 cli_authorization。"
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id",
+            "description": "创建 API Key 的客户端类型标识；手动创建时可为 null。"
+          },
+          "installation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installation Id",
+            "description": "CLI 安装实例标识；手动创建 API Key 时可为 null。"
+          },
+          "client_info": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Info",
+            "description": "创建 Key 时记录的客户端版本、设备和系统等非敏感信息。"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "API Key 过期时间；永不过期时为 null。"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At",
+            "description": "API Key 最近一次成功认证时间；从未使用时为 null。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "key_prefix",
+          "creation_source",
+          "client_id",
+          "installation_id",
+          "client_info",
+          "expires_at",
+          "last_used_at"
+        ],
+        "title": "OpenApiAuthStatusApiKeyDTO"
+      },
+      "OpenApiAuthStatusDTO": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "当前认证用户的 64 位字符串 ID。"
+          },
+          "auth_type": {
+            "type": "string",
+            "enum": [
+              "api_key",
+              "jwt"
+            ],
+            "title": "Auth Type",
+            "description": "当前凭证类型：api_key 或 jwt。"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiScope"
+            },
+            "type": "array",
+            "title": "Scopes",
+            "description": "当前凭证拥有的有序 Scope 列表。"
+          },
+          "scope_mode": {
+            "type": "string",
+            "enum": [
+              "api_key_snapshot",
+              "jwt_all"
+            ],
+            "title": "Scope Mode",
+            "description": "权限来源模式：API Key 权限快照或 JWT 全量权限。"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiAuthStatusApiKeyDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "API Key 认证的 Key 元数据；使用 JWT 时为 null。"
+          },
+          "server_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Server Time",
+            "description": "服务端当前 UTC 时间，可用于估算客户端时钟偏差。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "auth_type",
+          "scopes",
+          "scope_mode",
+          "api_key",
+          "server_time"
+        ],
+        "title": "OpenApiAuthStatusDTO"
+      },
+      "OpenApiCalendarEventDTO": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "正式日历事件的数字 ID。"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "event",
+              "todo"
+            ],
+            "title": "Type",
+            "description": "资源类型；可选值由当前 Schema 的枚举约束定义。"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "面向用户的补充描述；没有内容时为 null。"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "资源关联的地点文本；没有地点时为 null。"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Time",
+            "description": "开始时间，必须使用带时区的 ISO 8601 格式。"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time",
+            "description": "结束时间，ISO 8601 格式；没有结束时间时为 null。"
+          },
+          "is_all_day": {
+            "type": "boolean",
+            "title": "Is All Day",
+            "description": "是否为全天事件。"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "IANA 时区名或 UTC 偏移。"
+          },
+          "rrule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rrule",
+            "description": "RFC 5545 RRULE 重复规则；非重复事件为 null。"
+          },
+          "excluded_dates": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded Dates",
+            "description": "重复事件明确排除的发生时间列表；非重复事件或没有排除项时为 null。"
+          },
+          "enable_alarm": {
+            "type": "boolean",
+            "title": "Enable Alarm",
+            "description": "是否启用日历提醒。"
+          },
+          "trigger_seconds": {
+            "type": "integer",
+            "title": "Trigger Seconds",
+            "description": "相对事件开始时间的提醒偏移秒数，负数表示提前。"
+          },
+          "trigger_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Description",
+            "description": "提醒时间的用户可读说明；没有说明时为 null。"
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "quick_note",
+              "audio_recorded"
+            ],
+            "title": "Source Type",
+            "description": "资源来源类型。"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id",
+            "description": "业务来源资源 ID；手动创建的事件可为 null。"
+          },
+          "completed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed",
+            "description": "待办完成状态；普通日历事件为 null。"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "资源创建时间，ISO 8601 格式。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "type",
+          "description",
+          "location",
+          "start_time",
+          "end_time",
+          "is_all_day",
+          "timezone",
+          "rrule",
+          "excluded_dates",
+          "enable_alarm",
+          "trigger_seconds",
+          "trigger_description",
+          "source_type",
+          "source_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OpenApiCalendarEventDTO"
+      },
+      "OpenApiCalendarInstanceDTO": {
+        "properties": {
+          "instance_id": {
+            "type": "string",
+            "title": "Instance Id",
+            "description": "重复事件实例的稳定标识。"
+          },
+          "event_id": {
+            "type": "integer",
+            "title": "Event Id",
+            "description": "日历事件的数字 ID。"
+          },
+          "original_start_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Original Start Time",
+            "description": "重复规则计算出的原始开始时间。"
+          },
+          "original_end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original End Time",
+            "description": "重复规则计算出的原始结束时间。"
+          },
+          "actual_start_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Actual Start Time",
+            "description": "重复事件实例调整后的实际开始时间。"
+          },
+          "actual_end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual End Time",
+            "description": "重复事件实例调整后的实际结束时间。"
+          },
+          "trigger_start_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Trigger Start Time",
+            "description": "该实例计算出的提醒触发时间。"
+          },
+          "is_cancelled": {
+            "type": "boolean",
+            "title": "Is Cancelled",
+            "description": "该重复事件实例是否已取消。"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "资源创建时间，ISO 8601 格式。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "instance_id",
+          "event_id",
+          "original_start_time",
+          "original_end_time",
+          "actual_start_time",
+          "actual_end_time",
+          "trigger_start_time",
+          "is_cancelled",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OpenApiCalendarInstanceDTO"
+      },
+      "OpenApiCalendarMonthlyDTO": {
+        "properties": {
+          "dates": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/OpenApiCalendarInstanceDTO"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Dates",
+            "description": "按月内日号组织的重复事件实例字典。"
+          },
+          "events": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OpenApiCalendarEventDTO"
+            },
+            "type": "object",
+            "title": "Events",
+            "description": "本次查询或索引涉及的正式日历事件集合。"
+          },
+          "has_new_instances": {
+            "type": "boolean",
+            "title": "Has New Instances",
+            "description": "本次月度查询是否生成了新的重复事件实例。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dates",
+          "events",
+          "has_new_instances"
+        ],
+        "title": "OpenApiCalendarMonthlyDTO"
+      },
+      "OpenApiCalendarRangeDTO": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiCalendarEventDTO"
+            },
+            "type": "array",
+            "title": "Events",
+            "description": "本次查询或索引涉及的正式日历事件集合。"
+          },
+          "instances": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiCalendarInstanceDTO"
+            },
+            "type": "array",
+            "title": "Instances",
+            "description": "时间范围内的重复事件实例列表。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "events",
+          "instances"
+        ],
+        "title": "OpenApiCalendarRangeDTO"
+      },
+      "OpenApiCalendarSearchResultDTO": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "搜索命中的正式日历事件 ID。"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "event",
+              "todo"
+            ],
+            "title": "Type",
+            "description": "资源类型；可选值由当前 Schema 的枚举约束定义。"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "面向用户的补充描述；没有内容时为 null。"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "资源关联的地点文本；没有地点时为 null。"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Time",
+            "description": "开始时间，必须使用带时区的 ISO 8601 格式。"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time",
+            "description": "结束时间，ISO 8601 格式；没有结束时间时为 null。"
+          },
+          "is_all_day": {
+            "type": "boolean",
+            "title": "Is All Day",
+            "description": "是否为全天事件。"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "IANA 时区名或 UTC 偏移。"
+          },
+          "rrule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rrule",
+            "description": "RFC 5545 RRULE 重复规则；非重复事件为 null。"
+          },
+          "excluded_dates": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded Dates",
+            "description": "重复事件明确排除的发生时间列表；非重复事件或没有排除项时为 null。"
+          },
+          "enable_alarm": {
+            "type": "boolean",
+            "title": "Enable Alarm",
+            "description": "是否启用日历提醒。"
+          },
+          "trigger_seconds": {
+            "type": "integer",
+            "title": "Trigger Seconds",
+            "description": "相对事件开始时间的提醒偏移秒数，负数表示提前。"
+          },
+          "trigger_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Description",
+            "description": "提醒时间的用户可读说明；没有说明时为 null。"
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "quick_note",
+              "audio_recorded"
+            ],
+            "title": "Source Type",
+            "description": "资源来源类型。"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id",
+            "description": "业务来源资源 ID；手动创建的事件可为 null。"
+          },
+          "completed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed",
+            "description": "待办完成状态；普通日历事件为 null。"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "资源创建时间，ISO 8601 格式。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          },
+          "matched_title": {
+            "type": "string",
+            "title": "Matched Title",
+            "description": "包含搜索关键词的日历事件标题。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "type",
+          "description",
+          "location",
+          "start_time",
+          "end_time",
+          "is_all_day",
+          "timezone",
+          "rrule",
+          "excluded_dates",
+          "enable_alarm",
+          "trigger_seconds",
+          "trigger_description",
+          "source_type",
+          "source_id",
+          "created_at",
+          "updated_at",
+          "matched_title"
+        ],
+        "title": "OpenApiCalendarSearchResultDTO"
+      },
+      "OpenApiCalendarUpdateResultDTO": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "all",
+              "instance",
+              "future"
+            ],
+            "title": "Action",
+            "description": "重复事件更新范围：all、instance 或 future。"
+          },
+          "created_events": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiCalendarEventDTO"
+            },
+            "type": "array",
+            "title": "Created Events",
+            "description": "本次操作新创建的日历事件列表。"
+          },
+          "updated_events": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiCalendarEventDTO"
+            },
+            "type": "array",
+            "title": "Updated Events",
+            "description": "本次操作更新的日历事件列表。"
+          },
+          "deleted_events": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiCalendarEventDTO"
+            },
+            "type": "array",
+            "title": "Deleted Events",
+            "description": "本次操作删除或取消的日历事件列表。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "OpenApiCalendarUpdateResultDTO"
+      },
+      "OpenApiDailyReportDocumentDTO": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "title": "Identifier",
+            "description": "报告周期标识符，格式取决于报告类型。"
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Duration Seconds",
+            "description": "内容覆盖或处理时长，单位秒。"
+          },
+          "extra": {
+            "$ref": "#/components/schemas/OpenApiDailyReportExtraDTO",
+            "description": "日报的城市、关键词和录音数量等扩展信息。"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "面向用户的补充描述；没有内容时为 null。"
+          },
+          "cover_thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Thumbnail Url",
+            "description": "日报缩略封面 URL；未生成时为 null。"
+          },
+          "cover_large_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Large Url",
+            "description": "日报大尺寸封面 URL；未生成时为 null。"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At",
+            "description": "报告内容生成完成时间；尚未生成时为 null。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "identifier",
+          "duration_seconds",
+          "extra",
+          "title",
+          "description",
+          "cover_thumbnail_url",
+          "cover_large_url",
+          "generated_at",
+          "updated_at"
+        ],
+        "title": "OpenApiDailyReportDocumentDTO"
+      },
+      "OpenApiDailyReportExtraDTO": {
+        "properties": {
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City",
+            "description": "日报关联的城市；无法确定时为 null。"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords",
+            "description": "内容中提取出的关键词列表。"
+          },
+          "recording_count": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Recording Count",
+            "default": 0,
+            "description": "日报统计周期内关联的录音数量。"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "OpenApiDailyReportExtraDTO"
+      },
+      "OpenApiDailyReportSearchDTO": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "title": "Identifier",
+            "description": "报告周期标识符，格式取决于报告类型。"
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Duration Seconds",
+            "description": "内容覆盖或处理时长，单位秒。"
+          },
+          "extra": {
+            "$ref": "#/components/schemas/OpenApiDailyReportExtraDTO",
+            "description": "日报的城市、关键词和录音数量等扩展信息。"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "面向用户的补充描述；没有内容时为 null。"
+          },
+          "cover_thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Thumbnail Url",
+            "description": "日报缩略封面 URL；未生成时为 null。"
+          },
+          "cover_large_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Large Url",
+            "description": "日报大尺寸封面 URL；未生成时为 null。"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At",
+            "description": "报告内容生成完成时间；尚未生成时为 null。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          },
+          "matched_fields": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "title",
+                "body"
+              ]
+            },
+            "type": "array",
+            "title": "Matched Fields",
+            "description": "本条搜索结果命中搜索词的字段列表。"
+          },
+          "matched_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Title",
+            "description": "命中搜索词的标题文本；未命中标题时为 null。"
+          },
+          "matched_body_excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Body Excerpt",
+            "description": "命中搜索词的日报正文片段；未命中正文时为 null。"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "identifier",
+          "duration_seconds",
+          "extra",
+          "title",
+          "description",
+          "cover_thumbnail_url",
+          "cover_large_url",
+          "generated_at",
+          "updated_at"
+        ],
+        "title": "OpenApiDailyReportSearchDTO"
+      },
+      "OpenApiQuickNoteDTO": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "当前资源的数字 ID。"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "正文内容；允许为空的场景会返回或接受 null。"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "success",
+              "failed"
+            ],
+            "title": "Status",
+            "description": "资源当前处理或生成状态。"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "资源关联的地点文本；没有地点时为 null。"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude",
+            "description": "Quick Note 的经度；未记录定位时为 null。"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude",
+            "description": "Quick Note 的纬度；未记录定位时为 null。"
+          },
+          "has_calendar_events": {
+            "type": "boolean",
+            "title": "Has Calendar Events",
+            "description": "Quick Note 是否已经关联日历事件。"
+          },
+          "available_media_types": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "audio",
+                "image",
+                "video"
+              ]
+            },
+            "type": "array",
+            "title": "Available Media Types",
+            "description": "当前资源已经可以下载的媒体类型列表。"
+          },
+          "media_downloads": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "enum": [
+                "audio",
+                "image",
+                "video"
+              ]
+            },
+            "type": "object",
+            "title": "Media Downloads",
+            "description": "按媒体类型组织的开放平台相对下载路径。"
+          },
+          "matched_fields": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "title",
+                "content"
+              ]
+            },
+            "type": "array",
+            "title": "Matched Fields",
+            "description": "本条搜索结果命中搜索词的字段列表。"
+          },
+          "matched_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Title",
+            "description": "命中搜索词的标题文本；未命中标题时为 null。"
+          },
+          "matched_content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Content",
+            "description": "命中搜索词的 Quick Note 正文；未命中正文时为 null。"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "资源创建时间，ISO 8601 格式。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "content",
+          "status",
+          "location",
+          "longitude",
+          "latitude",
+          "has_calendar_events",
+          "available_media_types",
+          "media_downloads",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OpenApiQuickNoteDTO"
+      },
+      "OpenApiQuickNotePageDTO": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiQuickNoteDTO"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "当前查询或索引返回的条目集合。"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "是否还有下一页数据。"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "下一页游标；没有下一页时为 null。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "has_more",
+          "next_cursor"
+        ],
+        "title": "OpenApiQuickNotePageDTO"
+      },
+      "OpenApiRecordingChapterDTO": {
+        "properties": {
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time",
+            "description": "该总结章节相对录音起点的开始秒数；未知时为 null。"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "正文内容；允许为空的场景会返回或接受 null。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "content"
+        ],
+        "title": "OpenApiRecordingChapterDTO"
+      },
+      "OpenApiRecordingDTO": {
+        "properties": {
+          "recording_id": {
+            "type": "integer",
+            "title": "Recording Id",
+            "description": "录音的数字 ID。"
+          },
+          "voice_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice Id",
+            "description": "录音业务侧语音标识；没有对应值时为 null。"
+          },
+          "recording_type": {
+            "type": "string",
+            "enum": [
+              "ordinary",
+              "call",
+              "app_related"
+            ],
+            "title": "Recording Type",
+            "description": "录音类型：ordinary、call 或 app_related。"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "AI 生成或用户可见的总结内容；尚未生成时为 null。"
+          },
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp",
+            "description": "录音业务时间戳，Unix 秒。"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes",
+            "description": "录音时长，单位分钟；未知时为 null。"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "资源关联的地点文本；没有地点时为 null。"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code",
+            "description": "录音处理状态码；未知时为 null。"
+          },
+          "has_summary": {
+            "type": "boolean",
+            "title": "Has Summary",
+            "description": "录音是否已经存在可读取的总结。"
+          },
+          "audio_download_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Download Path",
+            "description": "音频下载接口的相对路径；没有可下载音频时为 null。"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "资源创建时间，ISO 8601 格式。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recording_id",
+          "voice_id",
+          "recording_type",
+          "title",
+          "summary",
+          "timestamp",
+          "duration_minutes",
+          "location",
+          "status_code",
+          "has_summary",
+          "audio_download_path",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OpenApiRecordingDTO"
+      },
+      "OpenApiRecordingDetailDTO": {
+        "properties": {
+          "recording_id": {
+            "type": "integer",
+            "title": "Recording Id",
+            "description": "录音的数字 ID。"
+          },
+          "voice_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice Id",
+            "description": "录音业务侧语音标识；没有对应值时为 null。"
+          },
+          "recording_type": {
+            "type": "string",
+            "enum": [
+              "ordinary",
+              "call",
+              "app_related"
+            ],
+            "title": "Recording Type",
+            "description": "录音类型：ordinary、call 或 app_related。"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "AI 生成或用户可见的总结内容；尚未生成时为 null。"
+          },
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp",
+            "description": "录音业务时间戳，Unix 秒。"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes",
+            "description": "录音时长，单位分钟；未知时为 null。"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "资源关联的地点文本；没有地点时为 null。"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code",
+            "description": "录音处理状态码；未知时为 null。"
+          },
+          "has_summary": {
+            "type": "boolean",
+            "title": "Has Summary",
+            "description": "录音是否已经存在可读取的总结。"
+          },
+          "audio_download_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Download Path",
+            "description": "音频下载接口的相对路径；没有可下载音频时为 null。"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "资源创建时间，ISO 8601 格式。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          },
+          "evaluate_time": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluate Time",
+            "description": "录音处理评估时间，Unix 秒；未记录时为 null。"
+          },
+          "transcript": {
+            "$ref": "#/components/schemas/OpenApiRecordingTranscriptDTO",
+            "description": "录音的完整转写文本、处理状态和分段结果。"
+          },
+          "overviews": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OpenApiRecordingOverviewDTO"
+            },
+            "type": "object",
+            "title": "Overviews",
+            "description": "按语言键组织的录音总结概览；通常包含 default。"
+          },
+          "speaker_map": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/OpenApiRecordingSpeakerDTO"
+            },
+            "type": "object",
+            "title": "Speaker Map",
+            "description": "按原始说话人标识组织的名称映射。"
+          },
+          "highlights": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiRecordingHighlightDTO"
+            },
+            "type": "array",
+            "title": "Highlights",
+            "description": "录音中提取的高光片段；不包含原始媒体路径。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recording_id",
+          "voice_id",
+          "recording_type",
+          "title",
+          "summary",
+          "timestamp",
+          "duration_minutes",
+          "location",
+          "status_code",
+          "has_summary",
+          "audio_download_path",
+          "created_at",
+          "updated_at",
+          "evaluate_time",
+          "transcript"
+        ],
+        "title": "OpenApiRecordingDetailDTO"
+      },
+      "OpenApiRecordingHighlightDTO": {
+        "properties": {
+          "at_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "At Ms",
+            "description": "高光在录音中的起始时间点，单位毫秒。"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Duration Ms",
+            "description": "高光片段持续时间，单位毫秒。"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text",
+            "description": "完整文本或片段文本；尚未生成时可为 null。"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": [
+              "audio",
+              "image",
+              "video",
+              "quick_note",
+              "ai_note"
+            ],
+            "title": "Media Type",
+            "description": "高光关联的媒体类型；不包含媒体存储路径。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at_ms",
+          "duration_ms",
+          "text",
+          "media_type"
+        ],
+        "title": "OpenApiRecordingHighlightDTO"
+      },
+      "OpenApiRecordingOverviewDTO": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "abstract": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abstract",
+            "description": "录音内容摘要；尚未生成时为 null。"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds",
+            "description": "当前语言概览记录的录音时长，单位秒；未知时为 null。"
+          },
+          "summaries": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Summaries",
+            "description": "按总结模板 ID 组织的录音总结正文。"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords",
+            "description": "内容中提取出的关键词列表。"
+          },
+          "mind_map": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mind Map",
+            "description": "录音总结生成的 Markdown 思维导图；没有内容时为 null。"
+          },
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiRecordingChapterDTO"
+            },
+            "type": "array",
+            "title": "Chapters",
+            "description": "按录音时间顺序组织的总结章节。"
+          },
+          "has_calendar": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Calendar",
+            "description": "当前语言的录音概览是否识别到日历内容；未知时为 null。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "abstract",
+          "duration_seconds",
+          "mind_map"
+        ],
+        "title": "OpenApiRecordingOverviewDTO"
+      },
+      "OpenApiRecordingPageDTO": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiRecordingDTO"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "当前查询或索引返回的条目集合。"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "下一页游标；没有下一页时为 null。"
+          },
+          "prev_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Cursor",
+            "description": "上一页游标；没有上一页时为 null。"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "是否还有下一页数据。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "next_cursor",
+          "prev_cursor",
+          "has_more"
+        ],
+        "title": "OpenApiRecordingPageDTO"
+      },
+      "OpenApiRecordingSearchDTO": {
+        "properties": {
+          "recording_id": {
+            "type": "integer",
+            "title": "Recording Id",
+            "description": "录音的数字 ID。"
+          },
+          "voice_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice Id",
+            "description": "录音业务侧语音标识；没有对应值时为 null。"
+          },
+          "recording_type": {
+            "type": "string",
+            "enum": [
+              "ordinary",
+              "call",
+              "app_related"
+            ],
+            "title": "Recording Type",
+            "description": "录音类型：ordinary、call 或 app_related。"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "AI 生成或用户可见的总结内容；尚未生成时为 null。"
+          },
+          "timestamp": {
+            "type": "integer",
+            "title": "Timestamp",
+            "description": "录音业务时间戳，Unix 秒。"
+          },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes",
+            "description": "录音时长，单位分钟；未知时为 null。"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "资源关联的地点文本；没有地点时为 null。"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code",
+            "description": "录音处理状态码；未知时为 null。"
+          },
+          "has_summary": {
+            "type": "boolean",
+            "title": "Has Summary",
+            "description": "录音是否已经存在可读取的总结。"
+          },
+          "audio_download_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Download Path",
+            "description": "音频下载接口的相对路径；没有可下载音频时为 null。"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "资源创建时间，ISO 8601 格式。"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language",
+            "description": "总结语言；未记录时为 null。"
+          },
+          "summary_template_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Template Id",
+            "description": "生成总结使用的模板 ID；未记录时为 null。"
+          },
+          "matched_fields": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "title",
+                "summary"
+              ]
+            },
+            "type": "array",
+            "title": "Matched Fields",
+            "description": "本条搜索结果命中搜索词的字段列表。"
+          },
+          "matched_texts": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "enum": [
+                "title",
+                "summary"
+              ]
+            },
+            "type": "object",
+            "title": "Matched Texts",
+            "description": "按命中字段组织的录音匹配文本。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recording_id",
+          "voice_id",
+          "recording_type",
+          "title",
+          "summary",
+          "timestamp",
+          "duration_minutes",
+          "location",
+          "status_code",
+          "has_summary",
+          "audio_download_path",
+          "created_at",
+          "updated_at",
+          "language",
+          "summary_template_id"
+        ],
+        "title": "OpenApiRecordingSearchDTO"
+      },
+      "OpenApiRecordingSpeakerDTO": {
+        "properties": {
+          "speaker_id": {
+            "type": "string",
+            "title": "Speaker Id",
+            "description": "说话人的稳定标识。"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "面向用户展示的名称。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "speaker_id",
+          "name"
+        ],
+        "title": "OpenApiRecordingSpeakerDTO"
+      },
+      "OpenApiRecordingTranscriptDTO": {
+        "properties": {
+          "recording_id": {
+            "type": "integer",
+            "title": "Recording Id",
+            "description": "录音的数字 ID。"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code",
+            "description": "录音处理状态码；未知时为 null。"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text",
+            "description": "完整文本或片段文本；尚未生成时可为 null。"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/OpenApiTranscriptSegmentDTO"
+            },
+            "type": "array",
+            "title": "Segments",
+            "description": "按时间顺序排列的录音转写片段。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recording_id",
+          "status_code",
+          "text"
+        ],
+        "title": "OpenApiRecordingTranscriptDTO"
+      },
+      "OpenApiReportDTO": {
+        "properties": {
+          "report_type": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ],
+            "title": "Report Type",
+            "description": "报告类型：daily、weekly 或 monthly。"
+          },
+          "identifier": {
+            "type": "string",
+            "title": "Identifier",
+            "description": "报告周期标识符，格式取决于报告类型。"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "queued",
+              "processing",
+              "success",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "description": "资源当前处理或生成状态。"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "IANA 时区名或 UTC 偏移。"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period Start",
+            "description": "报告统计周期起点，ISO 8601 格式。"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period End",
+            "description": "报告统计周期终点，ISO 8601 格式。"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "面向用户的补充描述；没有内容时为 null。"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "AI 生成或用户可见的总结内容；尚未生成时为 null。"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds",
+            "description": "内容覆盖或处理时长，单位秒。"
+          },
+          "markdown": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Markdown",
+            "description": "日报的完整 Markdown 正文，不包含 HTML。"
+          },
+          "word_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Word Count",
+            "description": "Markdown 正文的字符/词数统计值。"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At",
+            "description": "报告内容生成完成时间；尚未生成时为 null。"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "资源最后更新时间，ISO 8601 格式。"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "report_type",
+          "identifier",
+          "status",
+          "timezone",
+          "period_start",
+          "period_end",
+          "title",
+          "description",
+          "summary",
+          "duration_seconds",
+          "markdown",
+          "generated_at",
+          "updated_at"
+        ],
+        "title": "OpenApiReportDTO"
+      },
+      "OpenApiResponse_NoneType_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "type": "null",
+            "title": "Data",
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[NoneType]"
+      },
+      "OpenApiResponse_OpenApiAuthStatusDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiAuthStatusDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiAuthStatusDTO]"
+      },
+      "OpenApiResponse_OpenApiCalendarEventDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiCalendarEventDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiCalendarEventDTO]"
+      },
+      "OpenApiResponse_OpenApiCalendarMonthlyDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiCalendarMonthlyDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiCalendarMonthlyDTO]"
+      },
+      "OpenApiResponse_OpenApiCalendarRangeDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiCalendarRangeDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiCalendarRangeDTO]"
+      },
+      "OpenApiResponse_OpenApiCalendarUpdateResultDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiCalendarUpdateResultDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiCalendarUpdateResultDTO]"
+      },
+      "OpenApiResponse_OpenApiQuickNoteDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiQuickNoteDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiQuickNoteDTO]"
+      },
+      "OpenApiResponse_OpenApiQuickNotePageDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiQuickNotePageDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiQuickNotePageDTO]"
+      },
+      "OpenApiResponse_OpenApiRecordingDetailDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiRecordingDetailDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiRecordingDetailDTO]"
+      },
+      "OpenApiResponse_OpenApiRecordingPageDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiRecordingPageDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiRecordingPageDTO]"
+      },
+      "OpenApiResponse_OpenApiReportDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OpenApiReportDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[OpenApiReportDTO]"
+      },
+      "OpenApiResponse_UpdateTodoStatusResultDTO_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UpdateTodoStatusResultDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[UpdateTodoStatusResultDTO]"
+      },
+      "OpenApiResponse_list_OpenApiCalendarSearchResultDTO__": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/OpenApiCalendarSearchResultDTO"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[list[OpenApiCalendarSearchResultDTO]]"
+      },
+      "OpenApiResponse_list_OpenApiDailyReportDocumentDTO__": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/OpenApiDailyReportDocumentDTO"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[list[OpenApiDailyReportDocumentDTO]]"
+      },
+      "OpenApiResponse_list_OpenApiDailyReportSearchDTO__": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/OpenApiDailyReportSearchDTO"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[list[OpenApiDailyReportSearchDTO]]"
+      },
+      "OpenApiResponse_list_OpenApiRecordingSearchDTO__": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/OpenApiRecordingSearchDTO"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[list[OpenApiRecordingSearchDTO]]"
+      },
+      "OpenApiResponse_list_OpenApiScopeCatalogItemDTO__": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code",
+            "default": 0,
+            "description": "业务结果码；成功为 0，失败时与 HTTP 状态和 message 一起判断。"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "ok",
+            "description": "人类可读的结果或错误信息。"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/OpenApiScopeCatalogItemDTO"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "业务响应数据；无数据或失败时可为 null。"
+          }
+        },
+        "type": "object",
+        "title": "OpenApiResponse[list[OpenApiScopeCatalogItemDTO]]"
+      },
+      "OpenApiScope": {
+        "type": "string",
+        "enum": [
+          "quick_notes:read",
+          "quick_notes:write",
+          "calendar:read",
+          "calendar:write",
+          "voicemaster:read",
+          "ai_daily:read"
+        ],
+        "title": "OpenApiScope"
+      },
+      "OpenApiScopeCatalogItemDTO": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/OpenApiScope",
+            "description": "调用开放平台能力所需的 Scope 标识。"
+          },
+          "business_namespace": {
+            "type": "string",
+            "title": "Business Namespace",
+            "description": "Scope 所属的稳定业务命名空间。"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write"
+            ],
+            "title": "Access",
+            "description": "权限访问级别：read 为只读，write 为可修改。"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "面向用户展示的名称。"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "面向用户的补充描述；没有内容时为 null。"
+          },
+          "granted": {
+            "type": "boolean",
+            "title": "Granted",
+            "description": "当前认证凭证是否拥有该 Scope。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scope",
+          "business_namespace",
+          "access",
+          "name",
+          "description",
+          "granted"
+        ],
+        "title": "OpenApiScopeCatalogItemDTO"
+      },
+      "OpenApiTranscriptSegmentDTO": {
+        "properties": {
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time",
+            "description": "该转写片段相对录音起点的开始秒数；未知时为 null。"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time",
+            "description": "该转写片段相对录音起点的结束秒数；未知时为 null。"
+          },
+          "speaker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speaker",
+            "description": "转写片段的说话人标签；无法识别时为 null。"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "完整文本或片段文本；尚未生成时可为 null。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "OpenApiTranscriptSegmentDTO"
+      },
+      "UpdateCalendarEventRequestDTO": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "面向用户的补充描述；没有内容时为 null。"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "资源关联的地点文本；没有地点时为 null。"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone",
+            "description": "IANA 时区名或 UTC 偏移。"
+          },
+          "type": {
+            "$ref": "#/components/schemas/EventType",
+            "default": "event",
+            "description": "资源类型；可选值由当前 Schema 的枚举约束定义。"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Time",
+            "description": "开始时间，必须使用带时区的 ISO 8601 格式。"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time",
+            "description": "结束时间，ISO 8601 格式；没有结束时间时为 null。"
+          },
+          "is_all_day": {
+            "type": "boolean",
+            "title": "Is All Day",
+            "default": false,
+            "description": "是否为全天事件。"
+          },
+          "rrule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rrule",
+            "description": "RFC 5545 RRULE 重复规则；非重复事件为 null。"
+          },
+          "enable_alarm": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Alarm",
+            "description": "是否启用日历提醒。"
+          },
+          "trigger_seconds": {
+            "type": "integer",
+            "minimum": -864000,
+            "title": "Trigger Seconds",
+            "default": 0,
+            "description": "相对事件开始时间的提醒偏移秒数，负数表示提前。"
+          },
+          "trigger_description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Description",
+            "description": "提醒时间的用户可读说明；没有说明时为 null。"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "all",
+              "instance",
+              "future"
+            ],
+            "title": "Action",
+            "default": "all",
+            "description": "重复事件更新范围：all、instance 或 future。"
+          },
+          "instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance Id",
+            "description": "重复事件实例的稳定标识。"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "start_time"
+        ],
+        "title": "UpdateCalendarEventRequestDTO"
+      },
+      "UpdateQuickNoteRequestDTO": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "正文内容；允许为空的场景会返回或接受 null。"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "面向用户展示的标题；允许无标题的资源可为 null。"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UpdateQuickNoteRequestDTO"
+      },
+      "UpdateTodoStatusRequestDTO": {
+        "properties": {
+          "completed_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Completed Ids",
+            "description": "需要或已经标记为已完成的待办事件 ID 列表。"
+          },
+          "uncompleted_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Uncompleted Ids",
+            "description": "需要或已经标记为未完成的待办事件 ID 列表。"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UpdateTodoStatusRequestDTO"
+      },
+      "UpdateTodoStatusResultDTO": {
+        "properties": {
+          "completed_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Completed Ids",
+            "description": "需要或已经标记为已完成的待办事件 ID 列表。"
+          },
+          "uncompleted_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Uncompleted Ids",
+            "description": "需要或已经标记为未完成的待办事件 ID 列表。"
+          }
+        },
+        "type": "object",
+        "required": [
+          "completed_ids",
+          "uncompleted_ids"
+        ],
+        "title": "UpdateTodoStatusResultDTO"
+      }
+    },
+    "securitySchemes": {
+      "OpenPlatformBearer": {
+        "type": "http",
+        "description": "在 Authorization 请求头中使用 Bearer 认证；凭证可以是 Loomos API Key（`lms-...`）或 Loomos JWT。",
+        "scheme": "bearer",
+        "bearerFormat": "Loomos API Key or JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "open_platform_auth",
+      "description": "认证自检与 Scope 目录。用于接入初始化、授权结果确认和权限变更检测。"
+    },
+    {
+      "name": "open_platform_quick_notes",
+      "description": "Quick Note 查询、修改与删除。开放平台不允许创建 Quick Note。"
+    },
+    {
+      "name": "open_platform_calendar",
+      "description": "日历事件、待办及重复事件实例的查询和管理；不返回草稿数据。"
+    },
+    {
+      "name": "open_platform_voicemaster",
+      "description": "普通录音列表、搜索、富详情和音频下载；富详情包含转写与总结，开放平台不支持提交转录或创建录音。"
+    },
+    {
+      "name": "open_platform_ai_daily",
+      "description": "AI Daily 日报列表、搜索和统一报告详情；日报 Markdown 正文包含在详情响应中。"
+    }
+  ]
+}

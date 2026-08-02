@@ -1,0 +1,126 @@
+[
+  {
+    "id": "core-positive-auth-status",
+    "skill": "sharge-core",
+    "kind": "positive",
+    "prompt": "检查当前 Sharge 登录状态和 scope，只使用机器可读输出。",
+    "allowedSideEffects": ["local-redacted-log"],
+    "completion": "依据退出码与 envelope 报告状态，不暴露 credential。"
+  },
+  {
+    "id": "core-exclusion-recording",
+    "skill": "sharge-core",
+    "kind": "exclusion",
+    "prompt": "下载录音 456，并告诉我真实保存路径。",
+    "allowedSideEffects": [],
+    "completion": "转交 sharge-recordings；core 不自行决定录音下载语义。"
+  },
+  {
+    "id": "core-recovery-auth-required",
+    "skill": "sharge-core",
+    "kind": "recovery",
+    "prompt": "列出闪记；如果本机没有凭证，给出正确恢复动作。",
+    "allowedSideEffects": ["local-redacted-log"],
+    "completion": "业务命令不隐式登录；从 error.nextActions 提供符合原任务的下一步。"
+  },
+  {
+    "id": "notes-positive-delete-preview",
+    "skill": "sharge-notes",
+    "kind": "positive",
+    "prompt": "预演删除闪记 9007199254740993，但不要实际删除。",
+    "allowedSideEffects": ["local-redacted-log"],
+    "completion": "使用支持的 dry run，保持 ID 精确且不添加 --yes 执行真实删除。"
+  },
+  {
+    "id": "notes-exclusion-create",
+    "skill": "sharge-notes",
+    "kind": "exclusion",
+    "prompt": "创建一条标题为发布计划的新闪记。",
+    "allowedSideEffects": [],
+    "completion": "说明 Notes 没有 create 公共命令，不构造未来能力。"
+  },
+  {
+    "id": "notes-recovery-unknown-update",
+    "skill": "sharge-notes",
+    "kind": "recovery",
+    "prompt": "更新闪记标题时返回 outcome unknown，请继续完成任务。",
+    "allowedSideEffects": ["network-read", "local-redacted-log"],
+    "completion": "不重发 update；先 get/search 核对远端状态，再决定下一步。"
+  },
+  {
+    "id": "calendar-positive-create-preview",
+    "skill": "sharge-calendar",
+    "kind": "positive",
+    "prompt": "预演创建 2026-08-03 10:00+08:00 到 11:00+08:00 的项目评审日程，不要联网。",
+    "allowedSideEffects": ["local-redacted-log"],
+    "completion": "读取 create help/schema 并输出零网络 dry-run 计划。"
+  },
+  {
+    "id": "calendar-exclusion-transcript",
+    "skill": "sharge-calendar",
+    "kind": "exclusion",
+    "prompt": "查看昨天产品会的录音逐字稿。",
+    "allowedSideEffects": [],
+    "completion": "转交 sharge-recordings，不把日历详情当成录音逐字稿。"
+  },
+  {
+    "id": "calendar-recovery-unknown-create",
+    "skill": "sharge-calendar",
+    "kind": "recovery",
+    "prompt": "创建日程超时且 outcome unknown，确认它是否已经创建。",
+    "allowedSideEffects": ["network-read", "local-redacted-log"],
+    "completion": "不重发 create；用明确时间范围和标题读取/搜索后报告状态。"
+  },
+  {
+    "id": "recordings-positive-download-preview",
+    "skill": "sharge-recordings",
+    "kind": "positive",
+    "prompt": "预演下载录音 456，不要联网或创建任何下载目标文件。",
+    "allowedSideEffects": ["local-redacted-log"],
+    "completion": "使用 download dry run，并说明实际执行后必须采用返回的 filePath。"
+  },
+  {
+    "id": "recordings-exclusion-delete",
+    "skill": "sharge-recordings",
+    "kind": "exclusion",
+    "prompt": "删除录音 456。",
+    "allowedSideEffects": [],
+    "completion": "说明 Recordings 只读且没有 delete，不构造命令。"
+  },
+  {
+    "id": "recordings-recovery-scope",
+    "skill": "sharge-recordings",
+    "kind": "recovery",
+    "prompt": "列出录音时缺少 scope，请恢复后继续原任务。",
+    "allowedSideEffects": [
+      "authorization",
+      "network-read",
+      "local-redacted-log"
+    ],
+    "completion": "按 requiredScopes 与完整 nextActions.command 恢复，避免丢失已有 scope。"
+  },
+  {
+    "id": "diary-positive-get",
+    "skill": "sharge-diary",
+    "kind": "positive",
+    "prompt": "读取 20260730 的日记 Markdown。",
+    "allowedSideEffects": ["network-read", "local-redacted-log"],
+    "completion": "使用明确 YYYYMMDD，保持 Markdown 与业务字段原样。"
+  },
+  {
+    "id": "diary-exclusion-weekly",
+    "skill": "sharge-diary",
+    "kind": "exclusion",
+    "prompt": "获取 2026 年第 31 周的周报。",
+    "allowedSideEffects": [],
+    "completion": "说明当前只公开 daily，不暴露 weekly/monthly selector。"
+  },
+  {
+    "id": "diary-recovery-auth-required",
+    "skill": "sharge-diary",
+    "kind": "recovery",
+    "prompt": "读取 20260730 日记时发现未登录，请给出下一步。",
+    "allowedSideEffects": ["local-redacted-log"],
+    "completion": "业务命令不隐式登录；按 AUTH_REQUIRED 的 nextActions 恢复并回到 Diary。"
+  }
+]

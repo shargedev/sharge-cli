@@ -1,0 +1,57 @@
+{
+  "name": "@sharge/cli",
+  "version": "0.2.0",
+  "description": "面向 Agent 的 Sharge Open Platform CLI",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shargedev/sharge-cli.git"
+  },
+  "homepage": "https://github.com/shargedev/sharge-cli#readme",
+  "bugs": {
+    "url": "https://github.com/shargedev/sharge-cli/issues"
+  },
+  "keywords": [
+    "sharge",
+    "open-platform",
+    "cli",
+    "agent"
+  ],
+  "bin": {
+    "sharge": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "install.sh"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepack": "npm run build",
+    "contract:export": "node scripts/export-openapi.mjs",
+    "contract:test": "vitest run test/openapi-contract.test.ts",
+    "e2e": "node e2e/run.mjs",
+    "skills:validate": "npm run build && node scripts/validate-skills.mjs --skills-root skills --cli dist/index.js --scenarios test/fixtures/skills-scenarios.json",
+    "lint": "biome check src test e2e scripts package.json tsconfig.json tsup.config.ts vitest.config.ts biome.json",
+    "format": "biome check --write src test e2e scripts package.json tsconfig.json tsup.config.ts vitest.config.ts biome.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@jq-tools/jq": "^0.0.11",
+    "lossless-json": "^4.3.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.12",
+    "@types/node": "^25.6.0",
+    "@vitest/coverage-v8": "^4.1.4",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.4",
+    "yaml": "^2.8.2"
+  }
+}
