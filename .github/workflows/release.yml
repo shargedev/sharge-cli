@@ -82,7 +82,7 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org
       - run: npm pack --dry-run --json
       - name: Publish to npm with trusted publishing
-        run: npm publish
+        run: env -u NODE_AUTH_TOKEN npm publish
       - name: Verify registry version
         shell: bash
         run: |
