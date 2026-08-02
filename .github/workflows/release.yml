@@ -82,11 +82,33 @@ jobs:
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org
       - run: npm pack --dry-run --json
+      - name: Check whether the version is already published
+        id: registry
+        shell: bash
+        run: |
+          package_version="$(node -p 'require("./package.json").version')"
+          published_version="$(env -u NODE_AUTH_TOKEN npm view "@sharge/cli@${package_version}" version --registry=https://registry.npmjs.org 2>/dev/null || true)"
+          printf 'package-version=%s\n' "${package_version}" >> "${GITHUB_OUTPUT}"
+          if [[ "${published_version}" == "${package_version}" ]]; then
+            printf 'already-published=true\n' >> "${GITHUB_OUTPUT}"
+          else
+            printf 'already-published=false\n' >> "${GITHUB_OUTPUT}"
+          fi
       - name: Publish to npm with trusted publishing
+        if: steps.registry.outputs.already-published != 'true'
         run: env -u NODE_AUTH_TOKEN npm publish
       - name: Verify registry version
         shell: bash
         run: |
-          package_version="$(node -p 'require("./package.json").version')"
-          published_version="$(npm view "@sharge/cli@${package_version}" version --registry=https://registry.npmjs.org)"
-          test "${published_version}" = "${package_version}"
+          package_version="${{ steps.registry.outputs.package-version }}"
+          for attempt in {1..12}; do
+            published_version="$(env -u NODE_AUTH_TOKEN npm view "@sharge/cli@${package_version}" version --registry=https://registry.npmjs.org 2>/dev/null || true)"
+            if [[ "${published_version}" == "${package_version}" ]]; then
+              exit 0
+            fi
+            if [[ "${attempt}" -lt 12 ]]; then
+              sleep 5
+            fi
+          done
+          printf 'npm registry did not expose @sharge/cli@%s within 60 seconds.\n' "${package_version}" >&2
+          exit 1
