@@ -10,6 +10,7 @@ import { main } from "../src/cli.js";
 const exec = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const cleanupPaths: string[] = [];
+const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
 
 afterEach(async () => {
   await Promise.all(
@@ -81,7 +82,7 @@ describe("release package", () => {
     const prefix = join(workspace, "prefix");
     const home = join(workspace, "home");
     const { stdout } = await exec(
-      "npm",
+      npmExecutable,
       ["pack", "--json", "--pack-destination", workspace],
       {
         cwd: repositoryRoot,
@@ -107,7 +108,7 @@ describe("release package", () => {
 
     const tarball = join(workspace, manifest.filename);
     await exec(
-      "npm",
+      npmExecutable,
       ["install", "--global", "--prefix", prefix, "--ignore-scripts", tarball],
       {
         cwd: workspace,
@@ -115,7 +116,10 @@ describe("release package", () => {
         maxBuffer: 10 * 1024 * 1024,
       },
     );
-    const binary = join(prefix, "bin", "sharge");
+    const binary =
+      process.platform === "win32"
+        ? join(prefix, "sharge.cmd")
+        : join(prefix, "bin", "sharge");
     if (process.platform !== "win32") {
       expect((await stat(binary)).mode & 0o111).not.toBe(0);
     }
