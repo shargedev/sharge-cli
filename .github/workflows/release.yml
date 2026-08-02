@@ -49,6 +49,7 @@ jobs:
     needs:
       - install-smoke
     runs-on: ubuntu-latest
+    environment: npm publish
     timeout-minutes: 20
     permissions:
       contents: read
