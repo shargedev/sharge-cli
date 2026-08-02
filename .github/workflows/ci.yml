@@ -27,6 +27,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Use lockfile npm version
+        run: npm install --global npm@10.9.4
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -51,6 +53,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+      - name: Use lockfile npm version
+        run: npm install --global npm@10.9.4
       - run: npm ci
       - run: npm run contract:test
       - run: npm run skills:validate

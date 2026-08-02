@@ -4,7 +4,7 @@
   "description": "面向 Agent 的 Sharge Open Platform CLI",
   "license": "MIT",
   "type": "module",
-  "packageManager": "npm@11.6.2",
+  "packageManager": "npm@10.9.4",
   "engines": {
     "node": ">=20"
   },
