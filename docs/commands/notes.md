@@ -1,6 +1,6 @@
 # Notes 命令
 
-Notes 对应 Quick Note、闪记和 Live Photo。
+Notes 对应 Quick Note、闪记、Live Photo 和 AI Live Photo。
 
 Open API 支持读取、搜索、修改标题/正文、删除和媒体下载，不支持创建。
 

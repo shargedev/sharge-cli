@@ -63,6 +63,7 @@ describe("release package", () => {
     for (const alias of [
       "闪记",
       "Live Photo",
+      "AI Live Photo",
       "日程",
       "闪极日程",
       "Loomos Calendar",

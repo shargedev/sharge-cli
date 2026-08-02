@@ -6,7 +6,7 @@ CLI 覆盖四类产品数据：
 
 | Namespace | 产品名称 |
 | --- | --- |
-| `notes` | Quick Note、闪记、Live Photo |
+| `notes` | Quick Note、闪记、Live Photo、AI Live Photo |
 | `calendar` | Calendar、日程、闪极日程、Loomos Calendar |
 | `recordings` | 录音、Voice Recording、闪极录音、Loomos Recording |
 | `diary` | 日记、AI 日记、闪极日记、Loomos Diary |

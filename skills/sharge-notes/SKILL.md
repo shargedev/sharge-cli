@@ -1,6 +1,6 @@
 ---
 name: sharge-notes
-description: 通过 sharge CLI 读取、搜索、查看、更新、删除闪记（Quick Note）并下载闪记媒体。用于用户提到闪记、Note ID、闪记标题/正文或闪记音频/图片/视频时；不负责创建 Note、管理日历事件或处理录音与日记资源。
+description: 通过 sharge CLI 读取、搜索、查看、更新、删除 Notes 并下载其媒体。用于用户提到闪记、Quick Note、Live Photo、AI Live Photo、Note ID、标题/正文或相关音频/图片/视频时；不负责创建 Note、管理日历事件或处理录音与日记资源。
 ---
 
 # Sharge Notes
@@ -9,7 +9,7 @@ description: 通过 sharge CLI 读取、搜索、查看、更新、删除闪记�
 
 ## 范围
 
-处理 Notes 的单页 list/search、get、部分 update、delete 和 media download。当前不存在 `notes create`；遇到创建请求，直接说明不支持且未执行，不构造未来命令或把相邻产品当作兼容别名。
+Notes 是 Quick Note、闪记、Live Photo 和 AI Live Photo 的统一 CLI 领域，规范 namespace 始终是 `notes`。处理单页 list/search、get、部分 update、delete 和 media download。当前不存在 `notes create`；遇到创建请求，直接说明不支持且未执行，不构造未来命令或把相邻产品当作兼容别名。
 
 ## 最短路径
 
