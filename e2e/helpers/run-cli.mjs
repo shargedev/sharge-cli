@@ -15,19 +15,14 @@ export function mergeProcessOptions(options, defaults) {
 }
 
 export function runProcess(command, options = {}) {
-  const {
-    cwd,
-    env = process.env,
-    timeoutMs = 15_000,
-    stdin = "ignore",
-  } = options;
+  const { cwd, env = process.env, timeoutMs = 15_000, stdin } = options;
 
   return new Promise((resolve, reject) => {
     const stdinContent = typeof stdin === "string" ? stdin : null;
     const child = spawn(command[0], command.slice(1), {
       cwd,
       env,
-      stdio: [stdinContent === null ? stdin : "pipe", "pipe", "pipe"],
+      stdio: [stdinContent === null ? "ignore" : "pipe", "pipe", "pipe"],
     });
     let stdout = "";
     let stderr = "";

@@ -32,6 +32,21 @@ it("passes explicit string stdin to a child process", async () => {
   expect(result.stderr).toBe("");
 });
 
+it("does not write synthetic content when stdin is omitted", async () => {
+  const result = await runProcess(
+    [
+      process.execPath,
+      "-e",
+      "let size=0; process.stdin.on('data', chunk => size += chunk.length); process.stdin.on('end', () => process.stdout.write(String(size)));",
+    ],
+    { cwd: process.cwd() },
+  );
+
+  expect(result.exitCode).toBe(0);
+  expect(result.stdout).toBe("0");
+  expect(result.stderr).toBe("");
+});
+
 it("lets a focused E2E case override the default process timeout", () => {
   expect(
     mergeProcessOptions(
@@ -107,19 +122,16 @@ exit 0
 
   expect(result.exitCode).not.toBe(0);
   const commands = (await readFile(commandLog, "utf8")).trim().split("\n");
-  expect(commands.map((command) => command.split(" ")[0])).toEqual([
-    "init",
-    "up",
-    "start",
-    "wait",
-    "down",
-  ]);
+  expect(
+    commands.map((command) => command.split(" ")[0]),
+    result.stderr,
+  ).toEqual(["init", "up", "start", "wait", "down"]);
   expect(commands.some((command) => command.startsWith("clean "))).toBe(false);
 
   const evidenceLine = result.stderr
     .split("\n")
     .find((line) => line.startsWith('{"event":"e2e.failure"'));
-  expect(evidenceLine).toBeDefined();
+  expect(evidenceLine, result.stderr).toBeDefined();
   const evidence = JSON.parse(evidenceLine ?? "{}");
   expect(evidence).toMatchObject({
     event: "e2e.failure",
@@ -174,7 +186,7 @@ exit 0
   const evidenceLine = result.stderr
     .split("\n")
     .find((line) => line.startsWith('{"event":"e2e.failure"'));
-  expect(evidenceLine).toBeDefined();
+  expect(evidenceLine, result.stderr).toBeDefined();
   const evidence = JSON.parse(evidenceLine ?? "{}");
   expect(evidence).toMatchObject({
     event: "e2e.failure",
