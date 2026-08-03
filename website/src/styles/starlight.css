@@ -1,0 +1,106 @@
+@layer base, starlight, theme, components, utilities;
+
+@import '@astrojs/starlight-tailwind';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import './tokens.css';
+
+:root {
+  --sl-font: var(--sg-font-sans);
+  --sl-font-mono: var(--sg-font-mono);
+  --sl-color-accent-low: var(--sg-primary-soft);
+  --sl-color-accent: var(--sg-primary);
+  --sl-color-accent-high: var(--sg-text);
+  --sl-color-white: var(--sg-text);
+  --sl-color-gray-1: var(--sg-text);
+  --sl-color-gray-2: color-mix(in srgb, var(--sg-text) 82%, transparent);
+  --sl-color-gray-3: var(--sg-text-secondary);
+  --sl-color-gray-4: var(--sg-text-muted);
+  --sl-color-gray-5: var(--sg-border);
+  --sl-color-gray-6: var(--sg-bg-secondary);
+  --sl-color-black: var(--sg-bg);
+  --sl-color-bg: var(--sg-bg);
+  --sl-color-bg-nav: var(--sg-surface);
+  --sl-color-bg-sidebar: color-mix(in srgb, var(--sg-surface) 70%, transparent);
+  --sl-color-bg-inline-code: var(--sg-primary-softer);
+  --sl-color-hairline-light: var(--sg-border);
+  --sl-color-hairline: var(--sg-border);
+  --sl-color-hairline-shade: var(--sg-border);
+  --sl-content-width: 47.5rem;
+  --sl-sidebar-width: 16.5rem;
+}
+
+body {
+  background-color: var(--sg-bg);
+  background-image: linear-gradient(145deg, #ffffff 0%, #f2f2f2 52%, #e8e8e8 100%);
+  background-attachment: fixed;
+}
+
+html[data-theme='dark'] body {
+  background-image: linear-gradient(145deg, oklch(0.18 0 0), oklch(0.145 0 0) 52%, oklch(0.12 0 0));
+}
+
+.header {
+  border-bottom-color: var(--sg-border);
+  background: var(--sg-surface);
+  backdrop-filter: blur(12px);
+}
+
+.site-title img {
+  width: 10.5rem;
+}
+
+.sidebar-pane {
+  border-inline-end-color: var(--sg-border);
+  background: color-mix(in srgb, var(--sg-surface) 70%, transparent);
+}
+
+.sidebar-content a[aria-current='page'] {
+  border-radius: var(--sg-radius-control);
+  color: var(--sg-primary-foreground);
+  background: linear-gradient(100deg, var(--sg-primary), var(--sg-primary-end));
+}
+
+.sl-markdown-content {
+  color: var(--sg-text-secondary);
+}
+
+.sl-markdown-content :is(h2, h3, h4) {
+  letter-spacing: -0.02em;
+}
+
+.sl-markdown-content a {
+  text-underline-offset: 0.2em;
+}
+
+.expressive-code {
+  --ec-brdRad: var(--sg-radius-code);
+}
+
+.expressive-code .frame.is-terminal {
+  --button-spacing: 0.4rem;
+}
+
+.expressive-code .frame.is-terminal .header {
+  display: none;
+}
+
+.expressive-code .frame.is-terminal pre {
+  border-top: var(--ec-brdWd) solid var(--ec-brdCol);
+  border-top-left-radius: calc(var(--ec-brdRad) + var(--ec-brdWd));
+  border-top-right-radius: calc(var(--ec-brdRad) + var(--ec-brdWd));
+}
+
+.sl-markdown-content pre {
+  border: 1px solid color-mix(in srgb, var(--sg-terminal-text) 10%, transparent);
+  border-radius: var(--sg-radius-code);
+  box-shadow: none;
+}
+
+.sl-markdown-content :not(pre) > code {
+  border-radius: 0.35rem;
+}
+
+:focus-visible {
+  outline-color: var(--sg-focus);
+}

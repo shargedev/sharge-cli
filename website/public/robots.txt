@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shargedev.github.io/sharge-cli/sitemap-index.xml

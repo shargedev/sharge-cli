@@ -1,0 +1,37 @@
+---
+import logo from '../assets/logo.svg';
+---
+
+<a class="brand" href={import.meta.env.BASE_URL} aria-label="sharge CLI 首页">
+  <img src={logo.src} alt="SHARGE loomos" width="173" height="22" />
+  <span>CLI</span>
+</a>
+
+<style>
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    min-width: 0;
+  }
+
+  img {
+    width: min(10.8rem, 45vw);
+    height: auto;
+  }
+
+  :global([data-theme='dark']) img {
+    filter: invert(1);
+  }
+
+  span {
+    padding: 0.28rem 0.5rem;
+    border: 1px solid var(--sg-border);
+    border-radius: 0.45rem;
+    color: var(--sg-text-secondary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1;
+    background: var(--sg-surface);
+  }
+</style>

@@ -1,6 +1,6 @@
 {
   "name": "@sharge/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "面向 Agent 的 Sharge Open Platform CLI",
   "license": "MIT",
   "type": "module",
@@ -12,7 +12,7 @@
     "type": "git",
     "url": "git+https://github.com/shargedev/sharge-cli.git"
   },
-  "homepage": "https://github.com/shargedev/sharge-cli#readme",
+  "homepage": "https://shargedev.github.io/sharge-cli/",
   "bugs": {
     "url": "https://github.com/shargedev/sharge-cli/issues"
   },

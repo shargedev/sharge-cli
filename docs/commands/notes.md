@@ -1,3 +1,8 @@
+---
+title: Notes 命令
+description: Quick Note 的列表、搜索、详情、更新、删除与媒体下载命令。
+---
+
 # Notes 命令
 
 Notes 对应 Quick Note、闪记、Live Photo 和 AI Live Photo。

@@ -32,7 +32,7 @@ describe("release package", () => {
     );
     expect(packageJson).toMatchObject({
       name: "@sharge/cli",
-      version: "0.2.0",
+      version: "0.2.1",
       description: "面向 Agent 的 Sharge Open Platform CLI",
       engines: { node: ">=20" },
       bin: { sharge: "dist/index.js" },

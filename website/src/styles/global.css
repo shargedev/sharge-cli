@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  color: var(--sg-text);
+  font-family: var(--sg-font-sans);
+  background-color: var(--sg-bg);
+  background-image: linear-gradient(145deg, #ffffff 0%, #f2f2f2 48%, #e8e8e8 100%);
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+[data-theme='dark'] body {
+  background-image: linear-gradient(
+    145deg,
+    oklch(0.18 0 0) 0%,
+    oklch(0.145 0 0) 52%,
+    oklch(0.12 0 0) 100%
+  );
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+}
+
+::selection {
+  color: var(--sg-primary-foreground);
+  background: var(--sg-primary);
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--sg-focus) 34%, transparent);
+  outline-offset: 3px;
+}
+
+.site-shell {
+  width: min(100%, calc(var(--sg-layout-max) + 2 * var(--sg-gutter)));
+  margin-inline: auto;
+  padding-inline: var(--sg-gutter);
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--sg-radius-control);
+  color: var(--sg-primary-foreground);
+  background: var(--sg-primary);
+  transform: translateY(-180%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

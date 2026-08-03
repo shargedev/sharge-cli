@@ -1,3 +1,8 @@
+---
+title: 快速开始
+description: 安装 sharge CLI 与 Agent Skills，完成登录并读取第一条数据。
+---
+
 # 快速开始
 
 ## 1. 安装

@@ -1,0 +1,40 @@
+---
+import logo from '../assets/logo.svg';
+
+const { siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<a href={siteTitleHref} class="site-title" aria-label="sharge CLI 首页">
+  <img src={logo.src} alt="SHARGE loomos" width="173" height="22" />
+  <span>CLI</span>
+</a>
+
+<style>
+  .site-title {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--sg-text-secondary);
+    text-decoration: none;
+  }
+
+  img {
+    width: min(10.3rem, 42vw);
+    height: auto;
+  }
+
+  :global([data-theme='dark']) img {
+    filter: invert(1);
+  }
+
+  span {
+    padding: 0.28rem 0.48rem;
+    border: 1px solid var(--sg-border);
+    border-radius: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    background: var(--sg-surface);
+  }
+</style>

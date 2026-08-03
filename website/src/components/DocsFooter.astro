@@ -1,0 +1,66 @@
+---
+import EditLink from '@astrojs/starlight/components/EditLink.astro';
+import LastUpdated from '@astrojs/starlight/components/LastUpdated.astro';
+import Pagination from '@astrojs/starlight/components/Pagination.astro';
+import packageJson from '../../../package.json';
+---
+
+<footer>
+  <div class="meta">
+    <EditLink />
+    <LastUpdated />
+  </div>
+  <Pagination />
+  <div class="release">
+    <span>latest · v{packageJson.version}</span>
+    <a href="https://github.com/shargedev/sharge-cli/blob/main/CHANGELOG.md" rel="noreferrer">
+      Changelog
+    </a>
+  </div>
+</footer>
+
+<style>
+  footer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .meta,
+  .release {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 3rem;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+  }
+
+  .meta {
+    margin-top: 3rem;
+  }
+
+  .meta > :global(p:only-child) {
+    margin-inline-start: auto;
+  }
+
+  .release {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--sg-border);
+    font-size: var(--sl-text-xs);
+  }
+
+  .release span {
+    font-family: var(--sg-font-mono);
+  }
+
+  .release a {
+    color: inherit;
+    text-underline-offset: 0.2em;
+  }
+
+  .release a:hover {
+    color: var(--sl-color-white);
+  }
+</style>

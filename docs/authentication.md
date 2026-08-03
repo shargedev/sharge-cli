@@ -1,3 +1,8 @@
+---
+title: 鉴权
+description: 浏览器登录、API Key、scope、凭证缓存与退出登录行为。
+---
+
 # 鉴权
 
 Sharge CLI 只使用 Open Platform API Key 访问业务 API。浏览器页面使用 Loomos JWT 完成人类身份确认，但 JWT 不会交给 CLI。

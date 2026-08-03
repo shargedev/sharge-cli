@@ -1,3 +1,8 @@
+---
+title: Diary 命令
+description: 日记的按月读取、搜索与详情命令。
+---
+
 # Diary 命令
 
 Diary 对应日记、AI 日记、闪极日记和 Loomos Diary。
@@ -108,4 +113,3 @@ sharge diary settings
 ```
 
 返回数据不包含 HTML、OSS key、模板、render info、内部 metadata 或 retry 信息。
-

@@ -1,0 +1,86 @@
+:root {
+  color-scheme: light;
+  --sg-primary: #111111;
+  --sg-primary-end: #3a3a3a;
+  --sg-primary-foreground: #ffffff;
+  --sg-primary-soft: rgb(17 17 17 / 8%);
+  --sg-primary-softer: rgb(17 17 17 / 5%);
+  --sg-primary-border: rgb(17 17 17 / 14%);
+  --sg-primary-shadow: rgb(17 17 17 / 20%);
+  --sg-bg: #f2f2f2;
+  --sg-bg-secondary: #e5e5e5;
+  --sg-surface: rgb(255 255 255 / 86%);
+  --sg-surface-strong: #ffffff;
+  --sg-surface-hover: rgb(17 17 17 / 6%);
+  --sg-border: rgb(17 17 17 / 10%);
+  --sg-text: #252525;
+  --sg-text-secondary: rgb(37 37 37 / 62%);
+  --sg-text-muted: rgb(37 37 37 / 42%);
+  --sg-success: #98e21a;
+  --sg-warning: #d97706;
+  --sg-error: #dc2626;
+  --sg-focus: #111111;
+  --sg-terminal: #111111;
+  --sg-terminal-surface: #1a1a1a;
+  --sg-terminal-text: #f5f5f5;
+  --sg-terminal-muted: rgb(245 245 245 / 58%);
+  --sg-font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --sg-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  --sg-layout-max: 80rem;
+  --sg-gutter-mobile: 1rem;
+  --sg-gutter-tablet: 1.5rem;
+  --sg-gutter-desktop: 2rem;
+  --sg-gutter: clamp(var(--sg-gutter-mobile), 3vw, var(--sg-gutter-desktop));
+  --sg-grid-gap: 1.5rem;
+  --sg-space-1: 0.25rem;
+  --sg-space-2: 0.5rem;
+  --sg-space-3: 0.75rem;
+  --sg-space-4: 1rem;
+  --sg-space-6: 1.5rem;
+  --sg-space-8: 2rem;
+  --sg-space-12: 3rem;
+  --sg-space-16: 4rem;
+  --sg-space-24: 6rem;
+  --sg-space-32: 8rem;
+  --sg-radius-control: 0.625rem;
+  --sg-radius-code: 1rem;
+  --sg-radius-card: 1.25rem;
+  --sg-radius-hero: 1.875rem;
+  --sg-radius-pill: 999px;
+  --sg-shadow-control: 0 1px 2px rgb(17 17 17 / 6%);
+  --sg-shadow-card: 0 18px 44px rgb(17 17 17 / 10%);
+  --sg-shadow-focal: 0 30px 90px rgb(17 17 17 / 12%);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --sg-primary: oklch(0.922 0 0);
+  --sg-primary-end: oklch(0.78 0 0);
+  --sg-primary-foreground: oklch(0.205 0 0);
+  --sg-primary-soft: oklch(1 0 0 / 8%);
+  --sg-primary-softer: oklch(1 0 0 / 5%);
+  --sg-primary-border: oklch(1 0 0 / 14%);
+  --sg-primary-shadow: oklch(0 0 0 / 36%);
+  --sg-bg: oklch(0.145 0 0);
+  --sg-bg-secondary: oklch(0.18 0 0);
+  --sg-surface: oklch(0.205 0 0 / 86%);
+  --sg-surface-strong: oklch(0.205 0 0);
+  --sg-surface-hover: oklch(1 0 0 / 7%);
+  --sg-border: oklch(1 0 0 / 10%);
+  --sg-text: oklch(0.985 0 0);
+  --sg-text-secondary: oklch(0.708 0 0);
+  --sg-text-muted: oklch(0.556 0 0);
+  --sg-success: #98e21a;
+  --sg-warning: #f59e0b;
+  --sg-error: #f87171;
+  --sg-focus: oklch(0.922 0 0);
+  --sg-terminal: #090909;
+  --sg-terminal-surface: #111111;
+  --sg-terminal-text: #f5f5f5;
+  --sg-terminal-muted: rgb(245 245 245 / 58%);
+  --sg-shadow-control: 0 1px 2px rgb(0 0 0 / 18%);
+  --sg-shadow-card: 0 18px 44px rgb(0 0 0 / 20%);
+  --sg-shadow-focal: 0 30px 90px rgb(0 0 0 / 24%);
+}

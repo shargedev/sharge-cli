@@ -1,3 +1,8 @@
+---
+title: Sharge CLI 文档
+description: sharge CLI 的公开用户文档、核心保证与命令入口。
+---
+
 # Sharge CLI 文档
 
 `sharge` 是 Sharge Open Platform 的官方命令行客户端。它以 Agent 为主要用户，同时为登录、配置和故障处理提供清晰的人类体验。

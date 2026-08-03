@@ -1,3 +1,8 @@
+---
+title: Agent 使用指南
+description: Agent 发现命令、构造输入、安全执行并从错误中恢复的推荐流程。
+---
+
 # Agent 使用指南
 
 本文定义 Agent 调用 `sharge` 的推荐流程。目标是让一个没有仓库上下文的 Agent 从已安装 Skill 或 CLI 自身发现入口，并以最短安全路径完成计划、执行和恢复。

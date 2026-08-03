@@ -1,3 +1,8 @@
+---
+title: 错误与退出码
+description: 稳定错误类型、退出码、恢复动作与 unknown outcome 处理。
+---
+
 # 错误与退出码
 
 ## 读取错误
