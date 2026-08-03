@@ -16,6 +16,10 @@ The current public surface is documented in [`README.md`](./README.md) and [`doc
 
 If public behavior changes, update user documentation first, then tests and implementation.
 
+## Public documentation
+
+文档是给外部看的，不要对齐内部实现细节！文档不是代码，是给人看的！
+
 ## Architecture
 
 - `src/index.ts`: process entry and exit-code assignment.
