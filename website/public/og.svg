@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">sharge CLI</title>
+  <desc id="desc">把 Sharge 交给你的 Agent</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset=".52" stop-color="#f2f2f2"/>
+      <stop offset="1" stop-color="#e5e5e5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="72" y="72" width="1056" height="486" rx="30" fill="#ffffff" fill-opacity=".72" stroke="#111111" stroke-opacity=".1"/>
+  <circle cx="118" cy="118" r="7" fill="#98e21a"/>
+  <text x="142" y="127" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="28" font-weight="600" fill="#252525">SHARGE</text>
+  <rect x="286" y="94" width="62" height="42" rx="10" fill="#111111" fill-opacity=".06" stroke="#111111" stroke-opacity=".1"/>
+  <text x="317" y="121" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, monospace" font-size="17" font-weight="600" fill="#252525">CLI</text>
+  <text x="118" y="294" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, sans-serif" font-size="70" font-weight="600" letter-spacing="-2" fill="#252525">把 Sharge 交给你的 Agent</text>
+  <text x="118" y="362" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, sans-serif" font-size="29" fill="#252525" fill-opacity=".62">Sharge Open Platform 官方 Agent-first CLI</text>
+  <rect x="118" y="425" width="530" height="76" rx="15" fill="#111111"/>
+  <text x="383" y="473" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, PingFang SC, sans-serif" font-size="25" font-weight="600" fill="#ffffff">一句 Prompt，完成安装与授权</text>
+</svg>

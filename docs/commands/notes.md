@@ -1,6 +1,11 @@
+---
+title: Notes 命令
+description: Quick Note 的列表、搜索、详情、更新、删除与媒体下载命令。
+---
+
 # Notes 命令
 
-Notes 对应 Quick Note、闪记和 Live Photo。
+Notes 对应 Quick Note、闪记、Live Photo 和 AI Live Photo。
 
 Open API 支持读取、搜索、修改标题/正文、删除和媒体下载，不支持创建。
 

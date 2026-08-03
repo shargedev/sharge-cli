@@ -1,3 +1,8 @@
+---
+title: JSON 契约
+description: JSON envelope、机器帮助、结构化输入模板与 jq 行为。
+---
+
 # JSON 契约
 
 ## 启用 JSON

@@ -9,7 +9,7 @@ Sharge Open Platform 的官方命令行客户端，面向 AI Agent 设计，也�
 
 它目前覆盖 Quick Note、Calendar、Recordings 和 Diary，提供机器可读 help、稳定 JSON 契约、显式 dry run、安全下载与可恢复错误。
 
-[快速开始](#安装与快速开始) · [Agent 使用](#agent-快速开始) · [核心能力](#核心能力) · [命令](#命令概览) · [安全](#安全与风险) · [完整文档](./docs/README.md)
+[官网](https://shargedev.github.io/sharge-cli/) · [在线文档](https://shargedev.github.io/sharge-cli/docs/) · [快速开始](#安装与快速开始) · [Agent 使用](#agent-快速开始) · [核心能力](#核心能力) · [命令](#命令概览) · [安全](#安全与风险) · [仓库文档](./docs/README.md)
 
 ## 为什么使用 sharge
 

@@ -1,3 +1,8 @@
+---
+title: 配置
+description: settings、环境变量、base URL、时区与本地日志配置。
+---
+
 # 配置
 
 ## 配置目录

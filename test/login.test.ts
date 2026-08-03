@@ -232,7 +232,6 @@ describe("browser login happy path", () => {
         .map((line) => JSON.parse(line));
       expect(events.map((event) => event.event)).toEqual([
         "authorization.created",
-        "authorization.pending",
         "credential.saved",
         "authorization.approved",
       ]);
@@ -262,27 +261,34 @@ describe("browser login happy path", () => {
     }
   });
 
-  it("opens the complete server URL by default and never needs terminal input", async () => {
+  it("opens the complete server URL and waits silently for authorization", async () => {
     const homeDir = await mkdtemp(join(tmpdir(), "sharge-login-browser-"));
     cleanupPaths.push(homeDir);
     const opened: string[] = [];
+    let pollCount = 0;
     const server = await listen((request, response) => {
       void requestBody(request).then(() => {
-        response.writeHead(request.url?.endsWith("/poll") ? 200 : 201, {
+        const polling = request.url?.endsWith("/poll") ?? false;
+        response.writeHead(polling ? 200 : 201, {
           "Content-Type": "application/json",
         });
+        if (polling) {
+          pollCount += 1;
+        }
         response.end(
           JSON.stringify({
             code: 0,
             message: "ok",
-            data: request.url?.endsWith("/poll")
-              ? {
-                  status: "approved",
-                  key: "lms-browser-secret",
-                  key_id: 92,
-                  scopes: DEFAULT_SCOPES,
-                  expires_at: null,
-                }
+            data: polling
+              ? pollCount < 3
+                ? { status: "pending" }
+                : {
+                    status: "approved",
+                    key: "lms-browser-secret",
+                    key_id: 92,
+                    scopes: DEFAULT_SCOPES,
+                    expires_at: null,
+                  }
               : {
                   authorization_id: "auth_browser",
                   polling_token: "poll-browser-secret",
@@ -337,6 +343,7 @@ describe("browser login happy path", () => {
       );
       expect(capture.stderr()).toContain("核对码：ABCD-2345");
       expect(capture.stderr()).toContain("已尝试在默认浏览器中打开授权页面");
+      expect(capture.stderr()).not.toContain("等待授权");
     } finally {
       await server.close();
     }

@@ -1,3 +1,8 @@
+---
+title: Recordings 命令
+description: 录音列表、搜索、详情与音频下载命令。
+---
+
 # Recordings 命令
 
 Recordings 对应录音、Voice Recording、闪极录音和 Loomos Recording。

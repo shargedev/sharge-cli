@@ -1,3 +1,8 @@
+---
+title: 鉴权
+description: 浏览器登录、API Key、scope、凭证缓存与退出登录行为。
+---
+
 # 鉴权
 
 Sharge CLI 只使用 Open Platform API Key 访问业务 API。浏览器页面使用 Loomos JWT 完成人类身份确认，但 JWT 不会交给 CLI。
@@ -127,12 +132,12 @@ sharge login --json
 - stdout 最终只输出一个 envelope。
 - stderr 输出 JSON Lines 状态事件。
 - 不混入人类文本。
+- 等待授权期间不重复输出轮询状态。
 
 示例事件：
 
 ```json
 {"timestamp":"2026-07-31T01:00:00Z","level":"info","event":"authorization.created","authorizationId":"auth_...","userCode":"D9TF-20X4","expiresIn":600}
-{"timestamp":"2026-07-31T01:00:02Z","level":"info","event":"authorization.pending"}
 {"timestamp":"2026-07-31T01:00:08Z","level":"info","event":"credential.saved"}
 ```
 

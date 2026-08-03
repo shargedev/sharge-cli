@@ -174,6 +174,39 @@ describe("Sharge Skills", () => {
     }
   });
 
+  it("keeps every Notes product alias discoverable in its description and routing content", async () => {
+    const skillsRoot = await mkdtemp(
+      resolve(tmpdir(), "sharge-skills-notes-aliases-"),
+    );
+    await writeMinimalSkills(skillsRoot);
+    await writeFile(
+      resolve(skillsRoot, "sharge-notes", "SKILL.md"),
+      "---\nname: sharge-notes\ndescription: 用于处理 Quick Note 和闪记；不负责其他领域。\n---\n\n## 范围\n\nNotes 对应 Quick Note 和闪记。\n",
+    );
+    await writeFile(
+      resolve(skillsRoot, "sharge-core", "SKILL.md"),
+      "---\nname: sharge-core\ndescription: 用于测试；不负责其他领域。\n---\n\n## Handoff\n\n- Quick Note 和闪记交给 sharge-notes。\n",
+    );
+
+    try {
+      const result = await runProcess(
+        ["node", validator, "--skills-root", skillsRoot],
+        { cwd: root, timeoutMs: 5_000 },
+      );
+
+      expect(result.exitCode).not.toBe(0);
+      expect(JSON.parse(result.stderr).errors).toEqual(
+        expect.arrayContaining([
+          "sharge-notes: description missing product alias: Live Photo",
+          "sharge-notes: content missing product alias: AI Live Photo",
+          "sharge-core: Notes handoff missing product alias: Live Photo",
+        ]),
+      );
+    } finally {
+      await rm(skillsRoot, { recursive: true, force: true });
+    }
+  });
+
   it("accepts the folded description style from the specification skeleton", async () => {
     const skillsRoot = await mkdtemp(
       resolve(tmpdir(), "sharge-skills-folded-description-"),

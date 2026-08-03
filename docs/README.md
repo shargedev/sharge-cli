@@ -1,3 +1,8 @@
+---
+title: Sharge CLI 文档
+description: sharge CLI 的公开用户文档、核心保证与命令入口。
+---
+
 # Sharge CLI 文档
 
 `sharge` 是 Sharge Open Platform 的官方命令行客户端。它以 Agent 为主要用户，同时为登录、配置和故障处理提供清晰的人类体验。
@@ -6,7 +11,7 @@ CLI 覆盖四类产品数据：
 
 | Namespace | 产品名称 |
 | --- | --- |
-| `notes` | Quick Note、闪记、Live Photo |
+| `notes` | Quick Note、闪记、Live Photo、AI Live Photo |
 | `calendar` | Calendar、日程、闪极日程、Loomos Calendar |
 | `recordings` | 录音、Voice Recording、闪极录音、Loomos Recording |
 | `diary` | 日记、AI 日记、闪极日记、Loomos Diary |

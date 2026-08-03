@@ -32,7 +32,7 @@ describe("release package", () => {
     );
     expect(packageJson).toMatchObject({
       name: "@sharge/cli",
-      version: "0.2.0",
+      version: "0.2.1",
       description: "面向 Agent 的 Sharge Open Platform CLI",
       engines: { node: ">=20" },
       bin: { sharge: "dist/index.js" },
@@ -63,6 +63,7 @@ describe("release package", () => {
     for (const alias of [
       "闪记",
       "Live Photo",
+      "AI Live Photo",
       "日程",
       "闪极日程",
       "Loomos Calendar",

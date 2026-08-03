@@ -8,3 +8,5 @@ coverage/
 .env.*
 !.env.example
 .scratch
+.playwright-cli/
+website/.astro/

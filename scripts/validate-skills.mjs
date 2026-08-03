@@ -85,6 +85,12 @@ const CORE_SAFETY_CONTRACTS = [
 ];
 
 const DOMAIN_SECTIONS = ["范围", "最短路径", "执行", "领域规则", "Handoff"];
+const NOTES_PRODUCT_ALIASES = [
+  "Quick Note",
+  "闪记",
+  "Live Photo",
+  "AI Live Photo",
+];
 const UNCONDITIONAL_HELP_SEQUENCE =
   /(?:先|总是|一律|必须|每次)[^\n。；]{0,80}namespace help[^\n。；]{0,120}(?:再|然后)[^\n。；]{0,80}具体命令(?:的)?[^\n。；]{0,40}help/u;
 
@@ -148,6 +154,26 @@ function parseFrontmatter(source) {
   } catch {
     return undefined;
   }
+}
+
+function contentWithoutFrontmatter(source) {
+  const match = source.match(/^---\n[\s\S]*?\n---(?:\n|$)/);
+  return match ? source.slice(match[0].length) : source;
+}
+
+function markdownSection(source, heading) {
+  const marker = `\n## ${heading}\n`;
+  const start = source.indexOf(marker);
+  if (start === -1) return "";
+  const contentStart = start + marker.length;
+  const end = source.indexOf("\n## ", contentStart);
+  return source.slice(contentStart, end === -1 ? undefined : end);
+}
+
+function includesProductAlias(source, alias) {
+  return alias === "Live Photo"
+    ? /(?<!AI )Live Photo/u.test(source)
+    : source.includes(alias);
 }
 
 function markdownLinks(source) {
@@ -542,6 +568,27 @@ async function main(argv = process.argv.slice(2)) {
       errors.push(
         `${skill}: description must include positive triggers and exclusions`,
       );
+    }
+    if (skill === "sharge-notes" && typeof description === "string") {
+      const content = contentWithoutFrontmatter(source);
+      for (const alias of NOTES_PRODUCT_ALIASES) {
+        if (!includesProductAlias(description, alias)) {
+          errors.push(`${skill}: description missing product alias: ${alias}`);
+        }
+        if (!includesProductAlias(content, alias)) {
+          errors.push(`${skill}: content missing product alias: ${alias}`);
+        }
+      }
+    }
+    if (skill === "sharge-core") {
+      const handoff = markdownSection(source, "Handoff");
+      for (const alias of NOTES_PRODUCT_ALIASES) {
+        if (!includesProductAlias(handoff, alias)) {
+          errors.push(
+            `${skill}: Notes handoff missing product alias: ${alias}`,
+          );
+        }
+      }
     }
     if (
       Object.keys(frontmatter).some(

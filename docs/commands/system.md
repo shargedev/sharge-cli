@@ -1,3 +1,8 @@
+---
+title: 系统命令
+description: version、doctor、auth、config 与 logs 命令参考。
+---
+
 # 系统、鉴权、配置与日志命令
 
 ## `sharge version`
@@ -13,7 +18,7 @@ JSON `data`：
 
 ```json
 {
-  "version": "0.2.0"
+  "version": "0.2.1"
 }
 ```
 

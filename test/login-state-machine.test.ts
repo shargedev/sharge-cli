@@ -289,8 +289,6 @@ describe("login state machine", () => {
           .map((line) => JSON.parse(line).event),
       ).toEqual([
         "authorization.created",
-        "authorization.pending",
-        "authorization.processing",
         "credential.saved",
         "authorization.approved",
       ]);
@@ -465,7 +463,6 @@ describe("login state machine", () => {
           .map((line) => JSON.parse(line).event),
       ).toEqual([
         "authorization.created",
-        "authorization.processing",
         "credential.saved",
         "authorization.approved",
       ]);
@@ -649,11 +646,7 @@ describe("login state machine", () => {
           .trim()
           .split("\n")
           .map((line) => JSON.parse(line).event),
-      ).toEqual([
-        "authorization.created",
-        "authorization.pending",
-        "authorization.expired",
-      ]);
+      ).toEqual(["authorization.created", "authorization.expired"]);
     } finally {
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve())),

@@ -1,0 +1,29 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+
+const homeHref = import.meta.env.BASE_URL;
+const docsHref = `${import.meta.env.BASE_URL}docs/`;
+---
+
+<SiteLayout title="页面没有找到 — sharge CLI" description="这个页面不存在，返回 sharge CLI 首页或文档继续浏览。">
+  <main id="main-content" class="site-shell not-found">
+    <p class="code">404</p>
+    <h1>页面没有找到</h1>
+    <p>它可能已经移动，或者链接里有一处拼写错误。</p>
+    <nav aria-label="404 恢复入口">
+      <a class="primary" href={homeHref}>返回首页</a>
+      <a href={docsHref}>进入文档</a>
+      <a href="https://github.com/shargedev/sharge-cli" rel="noreferrer">前往 GitHub</a>
+    </nav>
+  </main>
+</SiteLayout>
+
+<style>
+  .not-found { display:grid; min-height:calc(100vh - 6rem); place-content:center; justify-items:start; padding-block:5rem; }
+  .code { margin:0 0 1rem; color:var(--sg-text-muted); font-family:var(--sg-font-mono); }
+  h1 { margin:0; font-size:clamp(2.4rem,7vw,4rem); letter-spacing:-.04em; }
+  h1+p { margin:1.2rem 0 2rem; color:var(--sg-text-secondary); line-height:1.75; }
+  nav { display:flex; flex-wrap:wrap; gap:.75rem; }
+  nav a { min-height:2.75rem; padding:.72rem 1rem; border:1px solid var(--sg-border); border-radius:var(--sg-radius-control); background:var(--sg-surface); }
+  nav .primary { border-color:transparent; color:var(--sg-primary-foreground); background:var(--sg-primary); }
+</style>

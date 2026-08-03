@@ -1,3 +1,8 @@
+---
+title: 命令参考
+description: sharge CLI 全部公开命令、全局选项与行为入口。
+---
+
 # 命令参考
 
 直接执行 `sharge` 会打印根文本 help 并返回 `0`。执行 `sharge --help --json` 返回完整机器命令目录。未知命令返回 `INVALID_COMMAND` 和退出码 `2`。

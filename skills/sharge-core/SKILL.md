@@ -55,7 +55,7 @@ sharge auth status --json
 
 ## Handoff
 
-- 闪记、Quick Note 或闪记媒体交给 [sharge-notes](../sharge-notes/SKILL.md)。
+- 闪记、Quick Note、Live Photo、AI Live Photo 或相关媒体交给 [sharge-notes](../sharge-notes/SKILL.md)。
 - 日历事件、待办、日历月份或时间范围交给 [sharge-calendar](../sharge-calendar/SKILL.md)。
 - 录音、逐字稿、overview、highlight 或音频交给 [sharge-recordings](../sharge-recordings/SKILL.md)。
 - 日记、AI Daily、明确日记月份或 `YYYYMMDD` 交给 [sharge-diary](../sharge-diary/SKILL.md)。仅说“月份”而没有资源领域时先澄清。
