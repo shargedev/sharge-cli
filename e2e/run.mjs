@@ -1693,7 +1693,7 @@ try {
     await seedPollRateLimit(rateCreated.authorizationId);
     const rateResult = await rateLimitedLogin.completion;
     assert.equal(rateResult.exitCode, 0);
-    assert(rateResult.stderr.includes('"event":"authorization.processing"'));
+    assert(!rateResult.stderr.includes('"event":"authorization.processing"'));
     recordLoginCase("real poll rate limit slow-down", [], rateResult);
 
     const credentialBeforeForce = JSON.parse(

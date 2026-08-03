@@ -298,11 +298,6 @@ export async function runLogin(
       if (error instanceof CliFailure && error.type === "RATE_LIMITED") {
         nextPollDelayMs =
           error.retryAfterMs ?? created.data.poll_interval * 1_000;
-        options.emitStatus({
-          event: "authorization.processing",
-          message: "轮询受到限流，将按服务端要求继续等待。",
-          retryAfterMs: nextPollDelayMs,
-        });
         continue;
       }
       throw error;
@@ -314,19 +309,11 @@ export async function runLogin(
     if (parsedPoll.data.status === "pending") {
       nextPollDelayMs =
         pollResponse.retryAfterMs ?? created.data.poll_interval * 1_000;
-      options.emitStatus({
-        event: "authorization.pending",
-        message: "等待授权…",
-      });
       continue;
     }
     if (parsedPoll.data.status === "processing") {
       nextPollDelayMs =
         pollResponse.retryAfterMs ?? created.data.poll_interval * 1_000;
-      options.emitStatus({
-        event: "authorization.processing",
-        message: "正在签发 API Key…",
-      });
       continue;
     }
     if (parsedPoll.data.status === "denied") {
