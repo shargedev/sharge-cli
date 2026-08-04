@@ -22,13 +22,13 @@ Sharge Open Platform 的官方命令行客户端，面向 AI Agent 设计，也�
 
 ## 核心能力
 
-| 领域 | 能力 |
-| --- | --- |
-| Notes | 列表、搜索、详情、更新、删除和媒体下载 |
-| Calendar | 月视图、范围读取、搜索、详情、创建、更新、删除和 Todo 状态 |
-| Recordings | 列表、搜索、富详情和音频下载 |
-| Diary | 按月读取、搜索和日记详情 |
-| Auth & Runtime | 浏览器登录、scope、诊断、配置和脱敏日志 |
+| 领域           | 能力                                                       |
+| -------------- | ---------------------------------------------------------- |
+| Notes          | 列表、搜索、详情、更新、删除和媒体下载                     |
+| Calendar       | 月视图、范围读取、搜索、详情、创建、更新、删除和 Todo 状态 |
+| Recordings     | 列表、搜索、富详情和音频下载                               |
+| Diary          | 按月读取、搜索和日记详情                                   |
+| Auth & Runtime | 浏览器登录、scope、诊断、配置和脱敏日志                    |
 
 ## 安装与快速开始
 
@@ -85,7 +85,7 @@ npm install --global @sharge/cli@latest
 # 2. 为当前用户的 Agent 安装全部 sharge Skills
 npx skills add shargedev/sharge-cli -y -g
 
-# 3. 发起登录；把输出的完整 URL 交给人类
+# 3. 发起登录；把输出的完整 URL 交给人类，这个将在前台轮询等待用户授权
 sharge login --no-browser
 
 # 4. 人类完成授权后验证身份
@@ -225,14 +225,14 @@ npx skills add shargedev/sharge-cli --list
 
 ## 文档
 
-| 文档 | 内容 |
-| --- | --- |
-| [快速开始](./docs/getting-started.md) | 安装、登录和第一次读取 |
-| [Agent 使用指南](./docs/agent-guide.md) | 最短安全调用、输入、恢复与分页 |
-| [命令参考](./docs/commands/README.md) | 全部命令、参数、scope 与示例 |
-| [JSON 契约](./docs/json-contract.md) | envelope、JSON help、输入 schema 与 jq |
-| [错误与退出码](./docs/errors.md) | 稳定错误、unknown outcome 与 nextActions |
-| [下载](./docs/downloads.md) | 路径、重名、覆盖、重定向与校验 |
+| 文档                                    | 内容                                     |
+| --------------------------------------- | ---------------------------------------- |
+| [快速开始](./docs/getting-started.md)   | 安装、登录和第一次读取                   |
+| [Agent 使用指南](./docs/agent-guide.md) | 最短安全调用、输入、恢复与分页           |
+| [命令参考](./docs/commands/README.md)   | 全部命令、参数、scope 与示例             |
+| [JSON 契约](./docs/json-contract.md)    | envelope、JSON help、输入 schema 与 jq   |
+| [错误与退出码](./docs/errors.md)        | 稳定错误、unknown outcome 与 nextActions |
+| [下载](./docs/downloads.md)             | 路径、重名、覆盖、重定向与校验           |
 
 ## 开发与贡献
 
