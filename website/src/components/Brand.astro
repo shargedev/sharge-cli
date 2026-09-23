@@ -1,8 +1,11 @@
 ---
 import logo from '../assets/logo.svg';
+interface Props { locale?: 'zh' | 'en' }
+const { locale = 'zh' } = Astro.props;
+const homeHref = `${import.meta.env.BASE_URL}${locale === 'en' ? 'en/' : ''}`;
 ---
 
-<a class="brand" href={import.meta.env.BASE_URL} aria-label="sharge CLI 首页">
+<a class="brand" href={homeHref} aria-label={locale === 'en' ? 'sharge CLI home' : 'sharge CLI 首页'}>
   <img src={logo.src} alt="SHARGE loomos" width="173" height="22" />
   <span>CLI</span>
 </a>
@@ -33,5 +36,9 @@ import logo from '../assets/logo.svg';
     font-weight: 600;
     line-height: 1;
     background: var(--sg-surface);
+  }
+
+  @media (max-width: 480px) {
+    img { width: 7rem; }
   }
 </style>

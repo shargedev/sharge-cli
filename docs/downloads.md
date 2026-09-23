@@ -7,7 +7,7 @@ description: 下载路径、重名、覆盖、重定向、哈希校验与文件�
 
 Sharge CLI 支持：
 
-- Quick Note 的 audio、image、video；
+- AI Live Photo(闪记) 的 audio、image、video；
 - Recording 音频。
 
 下载内容不会写入 stdout。
@@ -165,7 +165,7 @@ sharge recordings download 456 --timeout 20m --json
 
 ## 命令
 
-Quick Note：
+AI Live Photo(闪记)：
 
 ```sh
 sharge notes download 123 --media audio

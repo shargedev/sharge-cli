@@ -6,11 +6,14 @@ const docsRoot = new URL('../../docs/', import.meta.url);
 
 const generateDocsId = ({ entry }: { entry: string }) => {
   const pathWithoutExtension = entry.replace(/\.(md|mdx)$/i, '');
+  const english = pathWithoutExtension.endsWith('.en');
   const pathWithoutReadme = pathWithoutExtension
+    .replace(/\.en$/, '')
     .replace(/(^|\/)README$/i, '$1')
     .replace(/\/$/, '');
 
-  return pathWithoutReadme ? `docs/${pathWithoutReadme}` : 'docs';
+  const docsId = pathWithoutReadme ? `docs/${pathWithoutReadme}` : 'docs';
+  return english ? `en/${docsId}` : docsId;
 };
 
 export const collections = {

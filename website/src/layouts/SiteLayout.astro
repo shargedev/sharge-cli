@@ -5,22 +5,25 @@ import '../styles/global.css';
 interface Props {
   title: string;
   description: string;
+  locale?: 'zh' | 'en';
 }
 
-const { title, description } = Astro.props;
-const docsHref = `${import.meta.env.BASE_URL}docs/`;
+const { title, description, locale = 'zh' } = Astro.props;
+const english = locale === 'en';
+const docsHref = `${import.meta.env.BASE_URL}${english ? 'en/' : ''}docs/`;
+const otherLanguageHref = english ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}en/`;
 const ogImage = new URL(`${import.meta.env.BASE_URL}og.svg`, Astro.site);
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang={english ? 'en' : 'zh-CN'}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#f2f2f2" />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:locale" content={english ? 'en_US' : 'zh_CN'} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={Astro.url} />
@@ -28,6 +31,8 @@ const ogImage = new URL(`${import.meta.env.BASE_URL}og.svg`, Astro.site);
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href={`${import.meta.env.BASE_URL}favicon.svg`} type="image/svg+xml" />
     <link rel="canonical" href={Astro.url} />
+    <link rel="alternate" hreflang="zh-CN" href={new URL(import.meta.env.BASE_URL, Astro.site)} />
+    <link rel="alternate" hreflang="en" href={new URL(`${import.meta.env.BASE_URL}en/`, Astro.site)} />
     <title>{title}</title>
     <script is:inline>
       (() => {
@@ -38,15 +43,16 @@ const ogImage = new URL(`${import.meta.env.BASE_URL}og.svg`, Astro.site);
     </script>
   </head>
   <body>
-    <a class="skip-link" href="#main-content">跳到正文</a>
+    <a class="skip-link" href="#main-content">{english ? 'Skip to content' : '跳到正文'}</a>
     <header class="site-header">
       <div class="site-shell header-inner">
-        <Brand />
-        <nav aria-label="主导航">
-          <a href="#features">特性</a>
-          <a href={docsHref}>文档</a>
+        <Brand locale={locale} />
+        <nav aria-label={english ? 'Main navigation' : '主导航'}>
+          <a href="#features">{english ? 'Features' : '特性'}</a>
+          <a href={docsHref}>{english ? 'Docs' : '文档'}</a>
           <a href="https://github.com/shargedev/sharge-cli" rel="noreferrer">GitHub</a>
-          <button class="theme-toggle" type="button" data-theme-toggle aria-label="切换深浅主题">
+          <a class="language-link" href={otherLanguageHref} hreflang={english ? 'zh-CN' : 'en'}>{english ? '简体中文' : 'English'}</a>
+          <button class="theme-toggle" type="button" data-theme-toggle aria-label={english ? 'Toggle color theme' : '切换深浅主题'} data-theme-light-label={english ? 'Switch to light theme' : '切换到浅色主题'} data-theme-dark-label={english ? 'Switch to dark theme' : '切换到深色主题'}>
             <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
             <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4a8.5 8.5 0 1 0 11.2 11.2Z"></path></svg>
           </button>
@@ -88,6 +94,8 @@ const ogImage = new URL(`${import.meta.env.BASE_URL}og.svg`, Astro.site);
     color: var(--sg-text);
   }
 
+  .language-link { white-space: nowrap; }
+
   .theme-toggle {
     display: grid;
     width: 2.5rem;
@@ -123,10 +131,16 @@ const ogImage = new URL(`${import.meta.env.BASE_URL}og.svg`, Astro.site);
     display: block;
   }
 
-  @media (max-width: 640px) {
-    nav a:first-child {
+  @media (max-width: 720px) {
+    nav { gap: 0.75rem; }
+    nav a:first-child, nav a:nth-child(3) {
       display: none;
     }
+  }
+
+  @media (max-width: 480px) {
+    .header-inner { gap: 0.75rem; }
+    nav a:nth-child(2) { display: none; }
   }
 </style>
 
@@ -136,6 +150,6 @@ const ogImage = new URL(`${import.meta.env.BASE_URL}og.svg`, Astro.site);
     const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
     localStorage.setItem('starlight-theme', next);
-    themeToggle.setAttribute('aria-label', next === 'dark' ? '切换到浅色主题' : '切换到深色主题');
+    themeToggle.setAttribute('aria-label', next === 'dark' ? (themeToggle.dataset.themeLightLabel ?? 'Light theme') : (themeToggle.dataset.themeDarkLabel ?? 'Dark theme'));
   });
 </script>

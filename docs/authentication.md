@@ -41,8 +41,8 @@ sharge login
 
 | Scope | 能力 |
 | --- | --- |
-| `quick_notes:read` | 读取、搜索闪记和下载媒体 |
-| `quick_notes:write` | 修改标题/正文和删除闪记 |
+| `quick_notes:read` | 读取、搜索 AI Live Photo(闪记) 和下载媒体 |
+| `quick_notes:write` | 修改 AI Live Photo(闪记) 的标题/正文和删除条目 |
 | `calendar:read` | 读取和搜索日历 |
 | `calendar:write` | 创建、修改、删除日历和设置 todo 状态 |
 | `voicemaster:read` | 读取、搜索和下载录音 |

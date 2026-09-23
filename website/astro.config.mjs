@@ -46,6 +46,10 @@ export default defineConfig({
           label: '简体中文',
           lang: 'zh-CN',
         },
+        en: {
+          label: 'English',
+          lang: 'en',
+        },
       },
       social: [
         {
@@ -63,34 +67,37 @@ export default defineConfig({
       sidebar: [
         {
           label: '开始使用',
+          translations: { en: 'Get started' },
           items: [
-            { label: '文档概览', slug: 'docs' },
-            { label: '快速开始', slug: 'docs/getting-started' },
+            { slug: 'docs' },
+            { slug: 'docs/getting-started' },
           ],
         },
         {
           label: 'Agent',
-          items: [{ label: 'Agent 使用指南', slug: 'docs/agent-guide' }],
+          items: [{ slug: 'docs/agent-guide' }],
         },
         {
           label: '核心概念',
+          translations: { en: 'Core concepts' },
           items: [
-            { label: '鉴权', slug: 'docs/authentication' },
-            { label: '配置', slug: 'docs/configuration' },
-            { label: 'JSON 契约', slug: 'docs/json-contract' },
-            { label: '错误与退出码', slug: 'docs/errors' },
-            { label: '下载', slug: 'docs/downloads' },
+            { slug: 'docs/authentication' },
+            { slug: 'docs/configuration' },
+            { slug: 'docs/json-contract' },
+            { slug: 'docs/errors' },
+            { slug: 'docs/downloads' },
           ],
         },
         {
           label: '命令参考',
+          translations: { en: 'Command reference' },
           items: [
-            { label: '命令概览', slug: 'docs/commands' },
-            { label: '系统命令', slug: 'docs/commands/system' },
-            { label: 'Notes', slug: 'docs/commands/notes' },
-            { label: 'Calendar', slug: 'docs/commands/calendar' },
-            { label: 'Recordings', slug: 'docs/commands/recordings' },
-            { label: 'Diary', slug: 'docs/commands/diary' },
+            { slug: 'docs/commands' },
+            { slug: 'docs/commands/system' },
+            { slug: 'docs/commands/notes' },
+            { slug: 'docs/commands/calendar' },
+            { slug: 'docs/commands/recordings' },
+            { slug: 'docs/commands/diary' },
           ],
         },
       ],

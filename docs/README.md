@@ -11,7 +11,7 @@ CLI 覆盖四类产品数据：
 
 | Namespace | 产品名称 |
 | --- | --- |
-| `notes` | Quick Note、闪记、Live Photo、AI Live Photo |
+| `notes` | AI Live Photo(闪记) |
 | `calendar` | Calendar、日程、闪极日程、Loomos Calendar |
 | `recordings` | 录音、Voice Recording、闪极录音、Loomos Recording |
 | `diary` | 日记、AI 日记、闪极日记、Loomos Diary |
@@ -41,7 +41,7 @@ sharge login
 # 3. 验证身份
 sharge auth status --json
 
-# 4. 读取一页闪记
+# 4. 读取一页 AI Live Photo(闪记)
 sharge notes list --limit 20 --json
 ```
 
@@ -86,7 +86,7 @@ sharge
 └── diary list|search|get
 ```
 
-Open API 不允许创建 Quick Note，因此不存在 `sharge notes create`。当前产品只开放日记，因此 `diary` 不暴露周报和月报。
+Open API 不允许创建 AI Live Photo(闪记)，因此不存在 `sharge notes create`。当前产品只开放日记，因此 `diary` 不暴露周报和月报。
 
 ## stdout 与 stderr
 

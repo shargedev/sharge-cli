@@ -24,13 +24,13 @@ CLI help 是当前安装版本的最终机器契约，但不是每个任务的�
 
 不要机械执行 root → namespace → command 三级 help。每次 help 都应回答一个尚未解决的问题。
 
-例如，明确搜索闪记时可以直接执行：
+例如，明确搜索 AI Live Photo(闪记) 时可以直接执行：
 
 ```sh
 sharge notes search "发布计划" --json
 ```
 
-准备修改闪记时则先读取具体契约：
+准备修改 AI Live Photo(闪记) 时则先读取具体契约：
 
 ```sh
 sharge notes update --help --json

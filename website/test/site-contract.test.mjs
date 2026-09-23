@@ -17,6 +17,18 @@ test('首页提供完整的 Agent 与手动安装路径', async () => {
   assert.ok(html.includes('sharge auth status --json'));
 });
 
+test('英文首页提供语言切换和海外安装流程', async () => {
+  const html = await readFile(new URL('../dist/en/index.html', import.meta.url), 'utf8');
+
+  assert.match(html, /<html lang="en"/);
+  assert.ok(html.includes('Give your agent access to Loomos'));
+  assert.ok(html.includes('href="/sharge-cli/" hreflang="zh-CN"'));
+  assert.ok(html.includes('/sharge-cli/en/docs/'));
+  assert.ok(html.includes('README.en.md'));
+  assert.ok(html.includes('sharge config set base-url https://app.loomos.ai/'));
+  assert.ok(html.includes('sharge login'));
+});
+
 test('公开文档可导航、搜索并回到 GitHub 原文', async () => {
   const html = await readFile(
     new URL('../dist/docs/getting-started/index.html', import.meta.url),
@@ -52,15 +64,22 @@ test('所有公开文档路由存在，站内链接不暴露 Markdown 文件名'
   ];
 
   for (const route of routes) {
-    const html = await readFile(
-      new URL(`../dist/${route}/index.html`, import.meta.url),
-      'utf8'
-    );
-    const internalMarkdownLinks = [...html.matchAll(/href="([^"]+\.md(?:#[^"]*)?)"/g)]
-      .map((match) => match[1])
-      .filter((href) => !href.startsWith('https://github.com/'));
+    for (const localizedRoute of [route, `en/${route}`]) {
+      const html = await readFile(
+        new URL(`../dist/${localizedRoute}/index.html`, import.meta.url),
+        'utf8'
+      );
+      const internalMarkdownLinks = [...html.matchAll(/href="([^"]+\.md(?:#[^"]*)?)"/g)]
+        .map((match) => match[1])
+        .filter((href) => !href.startsWith('https://github.com/'));
 
-    assert.deepEqual(internalMarkdownLinks, [], `${route} 仍包含 Markdown 站内链接`);
+      assert.deepEqual(internalMarkdownLinks, [], `${localizedRoute} 仍包含 Markdown 站内链接`);
+      if (localizedRoute.startsWith('en/')) {
+        assert.match(html, /<html lang="en"/);
+        assert.ok(html.includes(`value="/sharge-cli/${route}/"`));
+        assert.ok(html.includes(`value="/sharge-cli/en/${route}/"`));
+      }
+    }
   }
 });
 
@@ -71,7 +90,7 @@ test('首页完整呈现价值、能力、安全流程和恢复入口', async ()
     'Agent-first',
     '行为可预测',
     '安全可控',
-    'Notes',
+    'AI Live Photo(闪记)',
     'Calendar',
     'Recordings',
     'Diary',
@@ -119,6 +138,7 @@ test('仓库公开入口与 Pages 发布配置指向静态站', async () => {
     await readFile(new URL('../../package.json', import.meta.url), 'utf8')
   );
   const readme = await readFile(new URL('../../README.md', import.meta.url), 'utf8');
+  const englishReadme = await readFile(new URL('../../README.en.md', import.meta.url), 'utf8');
   const workflow = await readFile(
     new URL('../../.github/workflows/pages.yml', import.meta.url),
     'utf8'
@@ -127,6 +147,7 @@ test('仓库公开入口与 Pages 发布配置指向静态站', async () => {
   assert.equal(rootPackage.homepage, 'https://shargedev.github.io/sharge-cli/');
   assert.ok(readme.includes('https://shargedev.github.io/sharge-cli/'));
   assert.ok(readme.includes('https://shargedev.github.io/sharge-cli/docs/'));
+  assert.ok(englishReadme.includes('https://shargedev.github.io/sharge-cli/en/docs/'));
   assert.ok(workflow.includes('actions/deploy-pages'));
   assert.ok(workflow.includes('npm --prefix website ci'));
   assert.ok(workflow.includes('npm --prefix website test'));
@@ -139,6 +160,6 @@ test('latest 文档显示构建版本并链接 Changelog', async () => {
     'utf8'
   );
 
-  assert.ok(html.includes('v0.2.1'));
+  assert.ok(html.includes('v0.2.2'));
   assert.ok(html.includes('https://github.com/shargedev/sharge-cli/blob/main/CHANGELOG.md'));
 });

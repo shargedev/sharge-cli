@@ -32,7 +32,7 @@ describe("release package", () => {
     );
     expect(packageJson).toMatchObject({
       name: "@sharge/cli",
-      version: "0.2.1",
+      version: "0.2.2",
       description: "面向 Agent 的 Sharge Open Platform CLI",
       engines: { node: ">=20" },
       bin: { sharge: "dist/index.js" },
@@ -97,6 +97,7 @@ describe("release package", () => {
     const paths = manifest.files.map((file: { path: string }) => file.path);
     expect(paths).toEqual([
       "LICENSE",
+      "README.en.md",
       "README.md",
       "dist/index.d.ts",
       "dist/index.js",

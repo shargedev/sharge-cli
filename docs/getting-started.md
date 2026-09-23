@@ -72,7 +72,7 @@ sharge auth status --json
 
 ## 3. 第一次读取数据
 
-读取一页闪记：
+读取一页 AI Live Photo(闪记)：
 
 ```sh
 sharge notes list --limit 20 --json

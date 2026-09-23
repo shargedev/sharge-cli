@@ -2,9 +2,10 @@
 import logo from '../assets/logo.svg';
 
 const { siteTitleHref } = Astro.locals.starlightRoute;
+const english = Astro.url.pathname.startsWith(`${import.meta.env.BASE_URL}en/`);
 ---
 
-<a href={siteTitleHref} class="site-title" aria-label="sharge CLI 首页">
+<a href={siteTitleHref} class="site-title" aria-label={english ? 'sharge CLI home' : 'sharge CLI 首页'}>
   <img src={logo.src} alt="SHARGE loomos" width="173" height="22" />
   <span>CLI</span>
 </a>
