@@ -102,11 +102,8 @@ describe("repository truth", () => {
     }
   });
 
-  it("does not expose private service hostnames", async () => {
-    const forbiddenHosts = [
-      ["dev-ai", "shargetech", "com"].join("."),
-      ["app", "loomos", "ai"].join("."),
-    ];
+  it("does not expose private development hostnames", async () => {
+    const forbiddenHosts = [["dev-ai", "shargetech", "com"].join(".")];
     const files = (
       await Promise.all(
         [
@@ -131,6 +128,20 @@ describe("repository truth", () => {
           hostname,
         );
       }
+    }
+  });
+
+  it("documents the overseas base URL before login in English entry points", async () => {
+    for (const path of [
+      "README.en.md",
+      "docs/README.en.md",
+      "docs/getting-started.en.md",
+      "docs/configuration.en.md",
+    ]) {
+      const source = await readFile(resolve(root, path), "utf8");
+      expect(source).toContain(
+        "sharge config set base-url https://app.loomos.ai/",
+      );
     }
   });
 

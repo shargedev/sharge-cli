@@ -4,11 +4,14 @@ const markdownExtension = /\.(md|mdx)$/i;
 
 function routeForMarkdown(relativePath) {
   const withoutExtension = relativePath.replace(markdownExtension, '');
+  const english = withoutExtension.endsWith('.en');
   const withoutReadme = withoutExtension
+    .replace(/\.en$/, '')
     .replace(/(^|\/)README$/i, '$1')
     .replace(/\/$/, '');
 
-  return withoutReadme ? `/docs/${withoutReadme}/` : '/docs/';
+  const docsRoute = withoutReadme ? `/docs/${withoutReadme}/` : '/docs/';
+  return english ? `/en${docsRoute}` : docsRoute;
 }
 
 function visitLinks(node, rewrite) {

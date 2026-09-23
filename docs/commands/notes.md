@@ -1,11 +1,11 @@
 ---
 title: Notes 命令
-description: Quick Note 的列表、搜索、详情、更新、删除与媒体下载命令。
+description: AI Live Photo(闪记) 的列表、搜索、详情、更新、删除与媒体下载命令。
 ---
 
 # Notes 命令
 
-Notes 对应 Quick Note、闪记、Live Photo 和 AI Live Photo。
+`notes` 对应 AI Live Photo(闪记)。
 
 Open API 支持读取、搜索、修改标题/正文、删除和媒体下载，不支持创建。
 
@@ -248,4 +248,4 @@ sharge notes download 123 \
 sharge notes create
 ```
 
-Open API 明确禁止创建 Quick Note。CLI 不提供 alias 或兼容实现。
+Open API 明确禁止创建 AI Live Photo(闪记)。CLI 不提供 alias 或兼容实现。

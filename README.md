@@ -1,5 +1,7 @@
 # sharge CLI
 
+简体中文 | [English](./README.en.md)
+
 [![npm version](https://img.shields.io/npm/v/@sharge/cli.svg)](https://www.npmjs.com/package/@sharge/cli)
 [![CI](https://github.com/shargedev/sharge-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/shargedev/sharge-cli/actions/workflows/ci.yml)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-339933.svg)](https://nodejs.org/)
@@ -7,7 +9,7 @@
 
 Sharge Open Platform 的官方命令行客户端，面向 AI Agent 设计，也为人类提供清晰的登录、配置与故障处理体验。
 
-它目前覆盖 Quick Note、Calendar、Recordings 和 Diary，提供机器可读 help、稳定 JSON 契约、显式 dry run、安全下载与可恢复错误。
+它目前覆盖 AI Live Photo(闪记)、日程、录音和 AI 日记，提供机器可读 help、稳定 JSON 契约、显式 dry run、安全下载与可恢复错误。
 
 [官网](https://shargedev.github.io/sharge-cli/) · [在线文档](https://shargedev.github.io/sharge-cli/docs/) · [快速开始](#安装与快速开始) · [Agent 使用](#agent-快速开始) · [核心能力](#核心能力) · [命令](#命令概览) · [安全](#安全与风险) · [仓库文档](./docs/README.md)
 
@@ -24,11 +26,11 @@ Sharge Open Platform 的官方命令行客户端，面向 AI Agent 设计，也�
 
 | 领域 | 能力 |
 | --- | --- |
-| Notes | 列表、搜索、详情、更新、删除和媒体下载 |
-| Calendar | 月视图、范围读取、搜索、详情、创建、更新、删除和 Todo 状态 |
-| Recordings | 列表、搜索、富详情和音频下载 |
-| Diary | 按月读取、搜索和日记详情 |
-| Auth & Runtime | 浏览器登录、scope、诊断、配置和脱敏日志 |
+| AI Live Photo(闪记)（`notes`） | 列表、搜索、详情、更新、删除和媒体下载 |
+| 日程（`calendar`） | 月视图、范围读取、搜索、详情、创建、更新、删除和待办状态 |
+| 录音（`recordings`） | 列表、搜索、富详情和音频下载 |
+| AI 日记（`diary`） | 按月读取、搜索和日记详情 |
+| 鉴权与配置 | 浏览器登录、scope、诊断、配置和脱敏日志 |
 
 ## 安装与快速开始
 
@@ -95,7 +97,7 @@ sharge auth status --json
 之后显式请求 JSON，并根据任务风险决定是否读取具体命令 help：
 
 ```sh
-# 1. 读取一页 Quick Note
+# 1. 读取一页 AI Live Photo(闪记)
 sharge notes list --limit 20 --json
 
 # 2. 在首次执行写操作前读取机器契约
