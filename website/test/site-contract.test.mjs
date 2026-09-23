@@ -160,6 +160,6 @@ test('latest 文档显示构建版本并链接 Changelog', async () => {
     'utf8'
   );
 
-  assert.ok(html.includes('v0.2.1'));
+  assert.ok(html.includes('v0.2.2'));
   assert.ok(html.includes('https://github.com/shargedev/sharge-cli/blob/main/CHANGELOG.md'));
 });

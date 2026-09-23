@@ -2,6 +2,16 @@
 
 本项目遵循 [Semantic Versioning](https://semver.org/)。
 
+## [0.2.2] - 2026-09-23
+
+### Added
+
+- 新增英文 README、命令文档和官网英文页面；英文安装指南说明海外服务地址 `https://app.loomos.ai/` 的配置方法。
+
+### Changed
+
+- 更新网站与 CLI 的依赖，以及 GitHub Pages 构建和部署 Action。
+
 ## [0.2.1] - 2026-08-03
 
 ### Added
@@ -38,5 +48,6 @@
 - 凭据不会完整输出或进入持久日志。
 - 下载重定向隔离 Authorization，并使用原子文件发布与 SHA-256 校验。
 
+[0.2.2]: https://github.com/shargedev/sharge-cli/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/shargedev/sharge-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/shargedev/sharge-cli/releases/tag/v0.2.0
