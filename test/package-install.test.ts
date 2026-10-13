@@ -10,6 +10,14 @@ import { main } from "../src/cli.js";
 const exec = promisify(execFile);
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const cleanupPaths: string[] = [];
+const requiredSkills = [
+  "sharge-calendar",
+  "sharge-core",
+  "sharge-diary",
+  "sharge-notes",
+  "sharge-recordings",
+];
+const skillPaths = requiredSkills.map((skill) => `skills/${skill}/SKILL.md`);
 
 afterEach(async () => {
   await Promise.all(
@@ -27,23 +35,22 @@ async function temporaryDirectory(prefix: string): Promise<string> {
 
 describe("release package", () => {
   it("declares the supported runtime and minimal published files", async () => {
-    const packageJson = JSON.parse(
+    const manifest = JSON.parse(
       await readFile(resolve(repositoryRoot, "package.json"), "utf8"),
     );
-    expect(packageJson).toMatchObject({
+    expect(manifest).toMatchObject({
       name: "@sharge/cli",
-      version: "0.2.2",
+      version: packageJson.version,
       description: "面向 Agent 的 Sharge Open Platform CLI",
       engines: { node: ">=20" },
       bin: { sharge: "dist/index.js" },
-      files: ["dist", "README.md", "install.sh"],
+      files: ["dist", "README.md", "install.sh", "skills"],
       scripts: { prepack: "npm run build" },
     });
-    expect(packageJson.files).not.toContain("skills");
     expect(
-      Object.keys(packageJson.scripts).filter((name) => name.startsWith("e2e")),
+      Object.keys(manifest.scripts).filter((name) => name.startsWith("e2e")),
     ).toEqual(["e2e"]);
-    expect(packageJson.scripts.e2e).toBe("node e2e/run.mjs");
+    expect(manifest.scripts.e2e).toBe("node e2e/run.mjs");
   });
 
   it("keeps product aliases in user docs rather than machine help", async () => {
@@ -77,7 +84,7 @@ describe("release package", () => {
     }
   });
 
-  it("packs and installs a runnable sharge binary into an isolated prefix", async () => {
+  it("packs and installs the CLI and matching five Skills into an isolated prefix", async () => {
     const workspace = await temporaryDirectory("sharge-package-");
     const prefix = join(workspace, "prefix");
     const home = join(workspace, "home");
@@ -103,10 +110,8 @@ describe("release package", () => {
       "dist/index.js",
       "install.sh",
       "package.json",
+      ...skillPaths,
     ]);
-    expect(paths.some((path: string) => path.startsWith("skills/"))).toBe(
-      false,
-    );
     expect(paths.some((path: string) => path.startsWith("plans/"))).toBe(false);
     expect(paths.some((path: string) => path.endsWith(".map"))).toBe(false);
 
@@ -147,7 +152,37 @@ describe("release package", () => {
       shell: process.platform === "win32",
     });
     expect(help.stdout).toContain("面向 Agent 的 Sharge 开放平台命令行工具");
-  }, 30_000);
+    const installedPackage =
+      process.platform === "win32"
+        ? join(prefix, "node_modules", "@sharge", "cli")
+        : join(prefix, "lib", "node_modules", "@sharge", "cli");
+    for (const path of skillPaths) {
+      expect(await readFile(join(installedPackage, path), "utf8")).toBe(
+        await readFile(join(repositoryRoot, path), "utf8"),
+      );
+    }
+    const validation = await exec(
+      process.execPath,
+      [
+        resolve(repositoryRoot, "scripts/validate-skills.mjs"),
+        "--skills-root",
+        join(installedPackage, "skills"),
+        "--cli",
+        join(installedPackage, "dist/index.js"),
+        "--scenarios",
+        resolve(repositoryRoot, "test/fixtures/skills-scenarios.json"),
+      ],
+      {
+        cwd: workspace,
+        env: { ...process.env, HOME: home },
+        maxBuffer: 10 * 1024 * 1024,
+      },
+    );
+    expect(JSON.parse(validation.stdout)).toMatchObject({
+      ok: true,
+      skills: 5,
+    });
+  }, 60_000);
 
   it("ships an executable installer without install-code support", async () => {
     const installer = resolve(repositoryRoot, "install.sh");

@@ -197,7 +197,7 @@ export SHARGE_API_KEY="lms-..."
 
 不要把 Key 作为命令参数。CLI 不提供 `config set api-key`。
 
-CLI 可以剥离误加的 `Bearer ` 前缀，但不接受 JWT。
+CLI 去除首尾空白及可选的 `Bearer ` 前缀，拒绝空值或内部空白。不限制 `lms-`、`lmk_` 等前缀，也不拒绝 JWT 形态；凭据有效性由目标服务端判断，规范化后的 token 原样发送。
 
 ## Config 命令
 

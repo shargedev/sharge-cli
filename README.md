@@ -183,7 +183,7 @@ sharge config show
 sharge doctor --json
 ```
 
-API Key 只接受 `lms-...`，不会通过命令行参数传入或完整输出。需要切换环境时使用 `sharge config set base-url ...`，随后重新验证登录状态。
+API Key 不限制前缀或 token 形态，有效性由目标服务端判断。CLI 会去除首尾空白及可选的 `Bearer ` 前缀，拒绝空值或内部空白；不会通过命令行参数传入或完整输出。需要切换环境时使用 `sharge config set base-url ...`，随后重新验证登录状态。
 
 详见[鉴权](./docs/authentication.md)与[配置](./docs/configuration.md)。
 
@@ -203,7 +203,13 @@ API Key 只接受 `lms-...`，不会通过命令行参数传入或完整输出�
 npm run skills:validate
 ```
 
-Skills 通过源码仓库分发，不进入 CLI 的 npm tarball：
+npm 包内的 `skills/` 随同版 CLI 交付五组 Skills。全局安装后位于 `$(npm root -g)/@sharge/cli/skills/`，可从本地包为 Agent 安装：
+
+```sh
+npx skills add "$(npm root -g)/@sharge/cli" -y -g
+```
+
+也可以从源码仓库安装：
 
 ```sh
 # 全局安装全部 Skills

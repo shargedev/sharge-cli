@@ -291,7 +291,7 @@ describe("config show", () => {
     }
   });
 
-  it("fast-fails on a selected settings JWT without falling back to env", async () => {
+  it("accepts a selected JWT-shaped credential without falling back to env", async () => {
     const homeDir = await mkdtemp(join(tmpdir(), "sharge-config-jwt-"));
     const configDir = join(homeDir, ".sharge");
     let stdout = "";
@@ -327,15 +327,47 @@ describe("config show", () => {
         },
       );
 
+      expect(exitCode).toBe(0);
+      expect(JSON.parse(stdout)).toMatchObject({
+        ok: true,
+        command: "config.show",
+        data: { credential: { source: "settings", keyPrefix: "header.p…" } },
+      });
+    } finally {
+      await rm(homeDir, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    "   ",
+    "Bearer   ",
+    "first second",
+    "first\tsecond",
+    "first\nsecond",
+  ])("rejects an empty or internally spaced credential %j", async (apiKey) => {
+    const homeDir = await mkdtemp(join(tmpdir(), "sharge-invalid-key-"));
+    try {
+      let stdout = "";
+      const exitCode = await runCli(
+        ["config", "show", "--json"],
+        {
+          stdout: (value) => {
+            stdout += value;
+          },
+          stderr: () => {},
+        },
+        undefined,
+        {
+          env: { SHARGE_API_KEY: apiKey },
+          homeDir,
+          cwd: homeDir,
+          platform: process.platform,
+        },
+      );
       expect(exitCode).toBe(2);
       expect(JSON.parse(stdout)).toMatchObject({
         ok: false,
-        command: "config.show",
-        error: {
-          type: "INVALID_INPUT",
-          field: "apiKey",
-          retryable: false,
-        },
+        error: { type: "INVALID_INPUT", field: "apiKey" },
       });
     } finally {
       await rm(homeDir, { recursive: true, force: true });

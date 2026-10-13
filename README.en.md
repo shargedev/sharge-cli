@@ -191,7 +191,7 @@ sharge config show
 sharge doctor --json
 ```
 
-API keys must begin with `lms-...`. They are neither supplied as command-line arguments nor printed in full. The CLI stores the base URL without the trailing slash, so `config show` displays `https://app.loomos.ai`. After changing the base URL, log in again if needed and verify your login status.
+API keys have no required prefix or token shape; the target server determines validity. The CLI trims surrounding whitespace and an optional `Bearer ` prefix, and rejects empty values or internal whitespace. Keys are neither supplied as command-line arguments nor printed in full. The CLI stores the base URL without the trailing slash, so `config show` displays `https://app.loomos.ai`. After changing the base URL, log in again if needed and verify your login status.
 
 See [authentication](./docs/authentication.en.md) and [configuration](./docs/configuration.en.md).
 
@@ -211,7 +211,13 @@ They use the CLI's `--help --json` as the source of truth for commands. The foll
 npm run skills:validate
 ```
 
-Skills are distributed from the source repository and are not included in the CLI's npm tarball:
+The npm package includes all five Skills in `skills/`, released with the same CLI version. After a global install they are available at `$(npm root -g)/@sharge/cli/skills/`. Register them for your agent from the local package:
+
+```sh
+npx skills add "$(npm root -g)/@sharge/cli" -y -g
+```
+
+You can also install from the source repository:
 
 ```sh
 # Install all Skills globally

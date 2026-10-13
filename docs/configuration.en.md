@@ -76,7 +76,7 @@ Use an IANA timezone such as `Asia/Shanghai`, `America/Los_Angeles`, or `Europe/
 
 ## Configure an API key manually
 
-Browser login is recommended. If manual configuration is necessary, set `SHARGE_API_KEY` or edit the protected settings file. The key must start with `lms-`; JWTs are not accepted. Never pass a key as a command argument; there is no `config set api-key`.
+Browser login is recommended. If manual configuration is necessary, set `SHARGE_API_KEY` or edit the protected settings file. The CLI trims surrounding whitespace and an optional `Bearer ` prefix, and rejects empty values or internal whitespace. There is no prefix or token-shape restriction; the server determines validity and receives the normalized token unchanged. Never pass a key as a command argument; there is no `config set api-key`.
 
 ## Config commands
 

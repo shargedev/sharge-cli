@@ -56,9 +56,9 @@ export function normalizeBaseUrl(value: string): string {
 }
 
 export function normalizeApiKey(value: string): string {
-  const normalized = value.trim().replace(/^Bearer\s+/i, "");
-  if (!normalized.startsWith("lms-") || /\s/.test(normalized)) {
-    throw invalidConfig("apiKey", "API Key 必须是 lms-...；不接受 JWT。");
+  const normalized = value.replace(/^\s*Bearer\s+/i, "").trim();
+  if (normalized.length === 0 || /\s/.test(normalized)) {
+    throw invalidConfig("apiKey", "API Key 不能为空，且不能包含内部空白。");
   }
   return normalized;
 }
@@ -77,7 +77,7 @@ export function environmentName(baseUrl: string): string {
 }
 
 function keyPrefix(apiKey: string | null): string | null {
-  return apiKey ? `${apiKey.slice(0, 8)}…` : null;
+  return apiKey ? `${apiKey.slice(0, Math.min(8, apiKey.length - 1))}…` : null;
 }
 
 export function resolveConfig(

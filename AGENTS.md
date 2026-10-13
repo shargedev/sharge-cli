@@ -42,7 +42,7 @@ Keep `src/cli.ts` focused on wiring. Put product behavior in the owning command 
 - Only `--input -` reads stdin.
 - Writes use one-shot requests; network or timeout failures report unknown outcome and are not retried.
 - Destructive execution requires `--yes`; writes support zero-network `--dry-run` where documented.
-- Credentials accept `lms-...` only and must never appear in output, logs, fixtures, or examples.
+- Credentials are trimmed, accept an optional Bearer prefix, and must be non-empty with no internal whitespace. The target server determines validity; complete credentials must never appear in output, logs, fixtures, or examples.
 - Settings and logs are permission-hardened, atomic where applicable, symlink-safe, rotated, and redacted.
 - Downloads never write binary data to stdout or forward Authorization across origins.
 - Backend DTO fields and opaque IDs/cursors are preserved without lossy conversion.
@@ -108,4 +108,4 @@ Validate them after changing `skills/`, CLI help, or command safety behavior:
 npm run skills:validate
 ```
 
-The npm tarball contains the CLI only. Skills remain in `skills/` so `npx skills` can discover and install them from the repository.
+The npm tarball includes the CLI and all five Skills in `skills/`, released together. Validate the real tarball and isolated installation, including Skill contents and relative references. Skills are also discoverable from the repository with `npx skills`.
