@@ -5,13 +5,13 @@ description: Browser login, API keys, scopes, cached credentials, and logout.
 
 # Authentication
 
-Sharge CLI uses an Open Platform API key for business API calls. The browser may use a Loomos JWT to confirm a person's identity, but the JWT is never given to the CLI.
+Sharge CLI sends the configured credential as a Bearer token to the target server, which determines validity. The CLI does not restrict prefixes or reject JWT-shaped tokens. Browser login uses the browser's identity credential for human approval and saves the API key returned by the server.
 
 ## Credential sources
 
 The CLI accepts an API key from `~/.sharge/settings.json` or `SHARGE_API_KEY`, in that order. If a settings key receives `401`, the CLI fails rather than silently trying the environment variable as another identity.
 
-There is no `--api-key` flag, JWT authentication, system Keychain integration, or custom settings path. A `Bearer ` prefix on an `lms-...` key is normalized away before it is stored.
+There is no `--api-key` flag, system Keychain integration, or custom settings path. Credentials are trimmed and an optional `Bearer ` prefix is removed; they must be non-empty and contain no internal whitespace. Other prefixes such as `lmk_` and JWT-shaped tokens are accepted and sent unchanged after normalization.
 
 ## Browser login
 

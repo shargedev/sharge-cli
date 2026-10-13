@@ -151,7 +151,7 @@ test('仓库公开入口与 Pages 发布配置指向静态站', async () => {
   assert.ok(workflow.includes('actions/deploy-pages'));
   assert.ok(workflow.includes('npm --prefix website ci'));
   assert.ok(workflow.includes('npm --prefix website test'));
-  assert.deepEqual(rootPackage.files, ['dist', 'README.md', 'install.sh']);
+  assert.deepEqual(rootPackage.files, ['dist', 'README.md', 'install.sh', 'skills']);
 });
 
 test('latest 文档显示构建版本并链接 Changelog', async () => {
@@ -160,6 +160,6 @@ test('latest 文档显示构建版本并链接 Changelog', async () => {
     'utf8'
   );
 
-  assert.ok(html.includes('v0.2.2'));
+  assert.ok(html.includes('v0.2.3'));
   assert.ok(html.includes('https://github.com/shargedev/sharge-cli/blob/main/CHANGELOG.md'));
 });

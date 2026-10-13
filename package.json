@@ -1,6 +1,6 @@
 {
   "name": "@sharge/cli",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "面向 Agent 的 Sharge Open Platform CLI",
   "license": "MIT",
   "type": "module",
@@ -32,7 +32,8 @@
   "files": [
     "dist",
     "README.md",
-    "install.sh"
+    "install.sh",
+    "skills"
   ],
   "scripts": {
     "build": "tsup",

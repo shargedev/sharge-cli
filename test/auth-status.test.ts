@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -53,7 +53,35 @@ describe("auth status", () => {
     });
   });
 
-  it("performs one authenticated request and preserves OpenAPI data", async () => {
+  it.each(
+    [
+      {
+        raw: "lms-auth-status-secret",
+        token: "lms-auth-status-secret",
+        keyPrefix: "lms-auth…",
+      },
+      {
+        raw: "  bEaReR lmk_computer-test-secret  ",
+        token: "lmk_computer-test-secret",
+        keyPrefix: "lmk_comp…",
+      },
+      {
+        raw: "header.payload.signature",
+        token: "header.payload.signature",
+        keyPrefix: "header.p…",
+      },
+      { raw: "opaque-token", token: "opaque-token", keyPrefix: "opaque-t…" },
+      { raw: "a", token: "a", keyPrefix: "…" },
+    ].flatMap((credential) => [
+      { ...credential, source: "settings" },
+      { ...credential, source: "env" },
+    ]),
+  )("sends normalized $source credential $raw once and preserves OpenAPI data", async ({
+    raw,
+    token,
+    source,
+    keyPrefix,
+  }) => {
     const homeDir = await mkdtemp(join(tmpdir(), "sharge-auth-status-"));
     cleanupPaths.push(homeDir);
     const configDir = join(homeDir, ".sharge");
@@ -109,7 +137,7 @@ describe("auth status", () => {
         schemaVersion: 1,
         installationId: "install_test",
         baseUrl: `http://127.0.0.1:${address.port}`,
-        apiKey: "lms-auth-status-secret",
+        ...(source === "settings" ? { apiKey: raw } : {}),
         timezone: "Asia/Shanghai",
       })}\n`,
       { mode: 0o600 },
@@ -121,7 +149,7 @@ describe("auth status", () => {
       const exitCode = await main(
         ["node", "sharge", "auth", "status", "--json"],
         {
-          env: {},
+          env: { SHARGE_API_KEY: source === "env" ? raw : "unused-env-token" },
           homeDir,
           cwd: homeDir,
           platform: process.platform,
@@ -142,22 +170,32 @@ describe("auth status", () => {
       expect(requests[0]).toMatchObject({
         method: "GET",
         url: "/open-api/v1/auth/status",
-        authorization: "Bearer lms-auth-status-secret",
+        authorization: `Bearer ${token}`,
       });
       expect(requests[0]?.clientDate).toMatch(
         /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/,
       );
       expect(requests[0]?.userAgent).toMatch(/^sharge-cli\/\d+\.\d+\.\d+/);
 
+      const log = await readFile(join(configDir, "sharge.log"), "utf8");
+      if (token.length > 1) {
+        expect(stdout).not.toContain(token);
+        expect(stderr).not.toContain(token);
+        expect(log).not.toContain(token);
+      } else {
+        expect(JSON.parse(log.split("\n")[0]).config.credential.keyPrefix).toBe(
+          "…",
+        );
+      }
       expect(JSON.parse(stdout)).toMatchObject({
         schemaVersion: "1",
         ok: true,
         command: "auth.status",
         data: {
           credential: {
-            source: "settings",
+            source,
             settingsPath: join(configDir, "settings.json"),
-            keyPrefix: "lms-auth…",
+            keyPrefix,
             baseUrl: `http://127.0.0.1:${address.port}`,
             environment: "custom",
           },

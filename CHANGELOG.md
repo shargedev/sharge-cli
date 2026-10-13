@@ -2,6 +2,16 @@
 
 本项目遵循 [Semantic Versioning](https://semver.org/)。
 
+## [0.2.3] - 2026-10-13
+
+### Added
+
+- npm 包随同版 CLI 交付 sharge-core、sharge-notes、sharge-diary、sharge-recordings、sharge-calendar 五组 Agent Skills。
+
+### Changed
+
+- API Key 不再限制前缀或 JWT 形态，由目标服务端判断有效性；保留首尾空白与可选 Bearer 前缀规范化、非空和无内部空白校验，短凭据也保持脱敏。
+
 ## [0.2.2] - 2026-09-23
 
 ### Added
@@ -48,6 +58,7 @@
 - 凭据不会完整输出或进入持久日志。
 - 下载重定向隔离 Authorization，并使用原子文件发布与 SHA-256 校验。
 
+[0.2.3]: https://github.com/shargedev/sharge-cli/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/shargedev/sharge-cli/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/shargedev/sharge-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/shargedev/sharge-cli/releases/tag/v0.2.0

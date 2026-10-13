@@ -5,7 +5,7 @@ description: 浏览器登录、API Key、scope、凭证缓存与退出登录行�
 
 # 鉴权
 
-Sharge CLI 只使用 Open Platform API Key 访问业务 API。浏览器页面使用 Loomos JWT 完成人类身份确认，但 JWT 不会交给 CLI。
+Sharge CLI 将配置的凭据作为 Bearer token 发送给目标服务端，由服务端判断其有效性。CLI 不限制凭据前缀，也不拒绝 JWT 形态。浏览器登录使用浏览器中的身份凭据完成人类确认，并为 CLI 保存服务端返回的 API Key。
 
 ## 凭证来源
 
@@ -25,11 +25,10 @@ settings.json apiKey > SHARGE_API_KEY
 不支持：
 
 - `--api-key`；
-- JWT；
 - 系统 Keychain；
 - 自定义 settings 路径。
 
-`Bearer lms-...` 会被宽松规范化为原始 Key，但 settings 最终保存原始值。
+凭据会去除首尾空白及可选的 `Bearer ` 前缀，必须非空且不含内部空白。`lmk_` 等其他前缀及 JWT 形态均可配置；规范化后的 token 原样发送，不做格式或有效性推断。
 
 ## 浏览器登录
 
