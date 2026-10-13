@@ -2,7 +2,7 @@
 
 本项目遵循 [Semantic Versioning](https://semver.org/)。
 
-## [0.2.3] - 2026-10-13
+## [0.2.4] - 2026-10-13
 
 ### Added
 
@@ -58,7 +58,7 @@
 - 凭据不会完整输出或进入持久日志。
 - 下载重定向隔离 Authorization，并使用原子文件发布与 SHA-256 校验。
 
-[0.2.3]: https://github.com/shargedev/sharge-cli/compare/v0.2.2...v0.2.3
+[0.2.4]: https://github.com/shargedev/sharge-cli/compare/v0.2.2...v0.2.4
 [0.2.2]: https://github.com/shargedev/sharge-cli/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/shargedev/sharge-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/shargedev/sharge-cli/releases/tag/v0.2.0
