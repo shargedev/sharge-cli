@@ -27,7 +27,6 @@ export type CalendarWriteOptions = {
   description?: string;
   location?: string;
   eventTimezone?: string;
-  type?: string;
   startTime?: string;
   endTime?: string;
   isAllDay?: string;
@@ -50,7 +49,6 @@ const flagByField: Record<string, string> = {
   description: "--description",
   location: "--location",
   timezone: "--event-timezone",
-  type: "--type",
   start_time: "--start-time",
   end_time: "--end-time",
   is_all_day: "--is-all-day",
@@ -187,7 +185,6 @@ function hasBusinessFlags(options: CalendarWriteOptions): boolean {
     options.description,
     options.location,
     options.eventTimezone,
-    options.type,
     options.startTime,
     options.endTime,
     options.isAllDay,
@@ -209,7 +206,6 @@ function candidateFromFlags(
     description: options.description ?? null,
     location: options.location ?? null,
     timezone: options.eventTimezone ?? null,
-    type: options.type ?? "event",
     start_time: options.startTime,
     end_time: options.endTime ?? null,
     is_all_day:
@@ -236,7 +232,6 @@ function template(command: "create" | "update") {
     description: null,
     location: null,
     timezone: null,
-    type: "event",
     start_time: "",
     end_time: null,
     is_all_day: false,

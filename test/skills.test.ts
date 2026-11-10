@@ -10,6 +10,7 @@ const requiredSkills = [
   "sharge-core",
   "sharge-notes",
   "sharge-calendar",
+  "sharge-todos",
   "sharge-recordings",
   "sharge-diary",
 ];
@@ -58,7 +59,7 @@ describe("Sharge Skills", () => {
     }
   });
 
-  it("rejects an unreviewed sixth skill in the initial delivery", async () => {
+  it("rejects an unreviewed seventh skill in the initial delivery", async () => {
     const skillsRoot = await mkdtemp(resolve(tmpdir(), "sharge-skills-extra-"));
     await writeMinimalSkills(skillsRoot);
     await mkdir(resolve(skillsRoot, "sharge-workflow"));
@@ -628,7 +629,7 @@ describe("Sharge Skills", () => {
       );
 
       expect(JSON.parse(result.stderr).errors).not.toContain(
-        "sharge-calendar: stable command calendar todos requires a direct --json example",
+        "sharge-calendar: stable command calendar get requires a direct --json example",
       );
     } finally {
       await rm(fixtureRoot, { recursive: true, force: true });
@@ -896,8 +897,8 @@ describe("Sharge Skills", () => {
     expect(result.exitCode).toBe(0);
     expect(JSON.parse(result.stdout)).toEqual({
       ok: true,
-      skills: 5,
-      scenarios: 15,
+      skills: 6,
+      scenarios: 18,
     });
   });
 

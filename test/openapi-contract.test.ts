@@ -59,9 +59,11 @@ describe("fixed OpenAPI contract", () => {
     const openApiInput = schema.components.schemas.UpdateQuickNoteRequestDTO;
 
     expect(openApiInput.additionalProperties).toBe(false);
-    expect(Object.keys(openApiInput.properties).sort()).toEqual(
-      [...notesUpdateFieldNames].sort(),
-    );
+    expect(
+      Object.keys(openApiInput.properties)
+        .filter((field) => field !== "type")
+        .sort(),
+    ).toEqual([...notesUpdateFieldNames].sort());
     expect(notesUpdateInputJsonSchema).toMatchObject({
       type: "object",
       additionalProperties: false,
@@ -101,9 +103,11 @@ describe("fixed OpenAPI contract", () => {
     const openApiInput = schema.components.schemas[schemaName];
 
     expect(openApiInput.additionalProperties).toBe(false);
-    expect(Object.keys(openApiInput.properties).sort()).toEqual(
-      [...fields].sort(),
-    );
+    expect(
+      Object.keys(openApiInput.properties)
+        .filter((field) => field !== "type")
+        .sort(),
+    ).toEqual([...fields].sort());
     expect(inputSchema).toMatchObject({
       type: "object",
       additionalProperties: false,

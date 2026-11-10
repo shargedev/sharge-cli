@@ -13,6 +13,7 @@ const REQUIRED_SKILLS = [
   "sharge-core",
   "sharge-notes",
   "sharge-calendar",
+  "sharge-todos",
   "sharge-recordings",
   "sharge-diary",
 ];

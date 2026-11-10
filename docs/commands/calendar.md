@@ -1,6 +1,6 @@
 ---
 title: Calendar 命令
-description: Calendar 的读取、搜索、创建、更新、删除与 Todo 状态命令。
+description: Calendar 的读取、搜索、创建、更新、删除命令。
 ---
 
 # Calendar 命令
@@ -29,7 +29,7 @@ Calendar event：
 | --- | --- |
 | `id` | integer |
 | `title` | string |
-| `type` | `event\|todo` |
+| `type` | `event` |
 | `description` | string/null |
 | `location` | string/null |
 | `start_time` | aware datetime |
@@ -43,7 +43,6 @@ Calendar event：
 | `trigger_description` | string/null |
 | `source_type` | `manual\|quick_note\|audio_recorded` |
 | `source_id` | string/null |
-| `completed` | boolean/null |
 | `created_at` / `updated_at` | datetime |
 
 Instance：
@@ -105,7 +104,7 @@ sharge calendar month 2026-07 \
 JSON 保持这两个动态字典的 key 和 Open API 的 snake_case 字段原样，不做
 camelCase 转换，也不丢弃后端新增字段。
 
-文本输出列出本月 event/todo 摘要；需要按日期读取实例、完整 DTO 或动态字典时
+文本输出列出本月 event 摘要；需要按日期读取实例、完整 DTO 或动态字典时
 使用 `--json`。
 
 ## `sharge calendar list`
@@ -146,7 +145,7 @@ sharge calendar list \
 }
 ```
 
-JSON 中 event、todo 和 instance 的业务字段保持 snake_case 原样，后端新增字段
+JSON 中 event 和 instance 的业务字段保持 snake_case 原样，后端新增字段
 也会透传。文本输出每行一个 item 摘要。重复执行安全。
 
 ## `sharge calendar search`
@@ -164,7 +163,7 @@ Scope：`calendar:read`
 默认 `limit=30`。
 
 搜索词去除首尾空白后不能为空。当前 Open API 只支持标题搜索，不接受
-`--start`、`--end` 或隐式时间范围。结果只包含当前用户的正式 event/todo；
+`--start`、`--end` 或隐式时间范围。结果只包含当前用户的正式 event；
 草稿不会返回。
 
 ```sh
@@ -186,7 +185,7 @@ Scope：`calendar:read`
 sharge calendar get 123 --json
 ```
 
-返回正式 event 或 todo。草稿和不属于当前用户的资源返回 `NOT_FOUND`。重复执行安全。
+返回正式日程。草稿和不属于当前用户的资源返回 `NOT_FOUND`。重复执行安全。
 
 `event-id` 必须是正整数。CLI 不通过“先 list 再过滤”模拟详情读取；它直接调用
 详情接口，并在 `NOT_FOUND` 时建议重新执行 `calendar list` 或
@@ -217,7 +216,6 @@ CLI 不自动重试、不自动扩展时间范围，也不自动补发第二次�
 | `description` | `--description` | 否 | nullable；默认 null |
 | `location` | `--location` | 否 | nullable，最多 255 字符；默认 null |
 | `timezone` | `--event-timezone` | 否 | nullable；IANA 名或 UTC offset；默认 null |
-| `type` | `--type` | 否 | `event` 默认，或 `todo` |
 | `start_time` | `--start-time` | 是 | 带 offset |
 | `end_time` | `--end-time` | 否 | nullable；带 offset；默认 null |
 | `is_all_day` | `--is-all-day` | 否 | 显式 `true\|false`；默认 false |
@@ -250,7 +248,6 @@ Scope：`calendar:write`
 ```sh
 sharge calendar create \
   --title "项目例会" \
-  --type event \
   --start-time 2026-08-03T10:00:00+08:00 \
   --end-time 2026-08-03T11:00:00+08:00 \
   --event-timezone Asia/Shanghai \
@@ -265,7 +262,6 @@ sharge calendar create \
   "description": "讨论 v1",
   "location": null,
   "timezone": "Asia/Shanghai",
-  "type": "event",
   "start_time": "2026-08-03T10:00:00+08:00",
   "end_time": "2026-08-03T11:00:00+08:00",
   "is_all_day": false,
@@ -330,7 +326,6 @@ CLI 会分别补为 `all` 和 null，最终 PUT body 仍然完整。
   "description": null,
   "location": null,
   "timezone": "Asia/Shanghai",
-  "type": "event",
   "start_time": "2026-08-03T10:30:00+08:00",
   "end_time": "2026-08-03T11:30:00+08:00",
   "is_all_day": false,
@@ -435,49 +430,5 @@ effects、`retrySafe: false` 和未验证前置条件。
 `retryable: false`，CLI 不自动重试。先执行 `calendar get <event-id> --json`
 读取 series 状态；current/future 再按原实例时间范围执行 list 确认。
 
-## `sharge calendar todos set-status`
 
-批量设置 todo 完成状态：
-
-```text
-sharge calendar todos set-status
-  --event-id <id>...
-  --status <completed|uncompleted>
-  [--input <json|@file|->]
-```
-
-Scope：`calendar:write`
-
-Flags 可重复：
-
-```sh
-sharge calendar todos set-status \
-  --event-id 101 \
-  --event-id 102 \
-  --status completed \
-  --json
-```
-
-JSON：
-
-```json
-{
-  "event_ids": [101, 102],
-  "status": "completed"
-}
-```
-
-约束：
-
-- `event_ids` 至少一个正整数；重复 ID 会在本地稳定去重；
-- status 只接受 `completed|uncompleted`；
-- 目标必须是 todo，event 返回输入错误。
-
-CLI 把产品输入映射为后端 `completed_ids/uncompleted_ids` 双数组；dry run 的
-body 展示实际后端请求。`--generate-input` 离线输出原始产品 JSON 模板，
-与业务 flags、`--input`、`--dry-run` 和 JSON 输出互斥。
-
-成功 `data` 原样返回后端两个数组。默认文本使用中文摘要。写入没有服务端
-幂等键；发生 unknown outcome 时不自动重试。错误中的可复制恢复命令会逐个执行
-`calendar get <event-id> --json`，确认全部 todo 的 completed 状态，不能只抽查
-批次中的第一个 ID。
+日程占一段时间，一定有开始时间，可重复、可提醒。待办只有标题和可选开始时间，有完成状态，不重复、不提醒；使用 [Todos](./todos.md)。日历查询只返回日程。`calendar get` 遇到待办 ID 返回 `NOT_FOUND`，请改用 `sharge todos get <id> --json`。

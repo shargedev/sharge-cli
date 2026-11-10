@@ -96,7 +96,7 @@ The runner creates a unique Runtime and isolated HOME/cwd. Success cleans genera
 
 ## Agent Skills
 
-The five repository Skills are installed from GitHub with the standard Skills CLI:
+The six repository Skills are installed from GitHub with the standard Skills CLI:
 
 ```sh
 npx skills add shargedev/sharge-cli -y -g
@@ -108,4 +108,4 @@ Validate them after changing `skills/`, CLI help, or command safety behavior:
 npm run skills:validate
 ```
 
-The npm tarball includes the CLI and all five Skills in `skills/`, released together. Validate the real tarball and isolated installation, including Skill contents and relative references. Skills are also discoverable from the repository with `npx skills`.
+The npm tarball includes the CLI and all six Skills in `skills/`, released together. Validate the real tarball and isolated installation, including Skill contents and relative references. Skills are also discoverable from the repository with `npx skills`.

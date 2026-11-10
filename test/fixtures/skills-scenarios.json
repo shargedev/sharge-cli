@@ -122,5 +122,29 @@
     "prompt": "读取 20260730 日记时发现未登录，请给出下一步。",
     "allowedSideEffects": ["local-redacted-log"],
     "completion": "业务命令不隐式登录；按 AUTH_REQUIRED 的 nextActions 恢复并回到 Diary。"
+  },
+  {
+    "id": "todos-positive-list",
+    "skill": "sharge-todos",
+    "kind": "positive",
+    "prompt": "列出未完成待办。",
+    "allowedSideEffects": ["network-read", "local-redacted-log"],
+    "completion": "直接执行 sharge todos list --json，只读一页。"
+  },
+  {
+    "id": "todos-exclusion-reminder",
+    "skill": "sharge-todos",
+    "kind": "exclusion",
+    "prompt": "每周一十点提醒我开会。",
+    "allowedSideEffects": [],
+    "completion": "转交 sharge-calendar，待办不重复、不提醒。"
+  },
+  {
+    "id": "todos-recovery-unknown-create",
+    "skill": "sharge-todos",
+    "kind": "recovery",
+    "prompt": "创建待办后 outcome unknown，请确认结果。",
+    "allowedSideEffects": ["network-read", "local-redacted-log"],
+    "completion": "不重发 create；用 list 核对，无法唯一确认就如实说明。"
   }
 ]

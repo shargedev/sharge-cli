@@ -549,7 +549,7 @@ try {
     await assertCase("version text", ["version"], {
       exitCode: 0,
       assert(result) {
-        assert.match(result.stdout, /^\d+\.\d+\.\d+\n$/);
+        assert.equal(result.stdout, `${packageJson.version}\n`);
         assert.equal(result.stderr, "");
       },
     }),
@@ -1118,9 +1118,9 @@ try {
         observation.client_date,
         /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/,
       );
-      assert.match(
+      assert.equal(
         observation.user_agent,
-        /^sharge-cli\/\d+\.\d+\.\d+ \(.+; Node v\d+/,
+        `sharge-cli/${packageJson.version} (${process.platform}; Node ${process.version})`,
       );
     }
     const logContents = await readFile(
@@ -1580,7 +1580,8 @@ try {
         "import time",
         "from redis import Redis",
         "client = Redis.from_url(os.environ['REDIS_URL'], decode_responses=True)",
-        "key = 'open_platform:cli_auth:' + sys.argv[1]",
+        "from open_platform._cli_authorization._repository import CLI_AUTHORIZATION_KEY_PREFIX",
+        "key = CLI_AUTHORIZATION_KEY_PREFIX + ':authorization:' + sys.argv[1]",
         "raw = client.get(key)",
         "assert raw, key",
         "value = json.loads(raw)",
@@ -2934,7 +2935,6 @@ try {
             assert.equal(envelope.command, "calendar.month");
             assert.deepEqual(Object.keys(envelope.data.events).sort(), [
               "9101",
-              "9102",
               "9103",
             ]);
             assert.equal("9104" in envelope.data.events, false);
@@ -2972,7 +2972,7 @@ try {
           exitCode: 0,
           assert(result) {
             const data = JSON.parse(result.stdout).data;
-            assert.deepEqual(Object.keys(data.events), ["9102"]);
+            assert.deepEqual(Object.keys(data.events), []);
             assert(
               Object.values(data.dates)
                 .flat()
@@ -3026,7 +3026,7 @@ try {
           exitCode: 0,
           assert(result) {
             assert.match(result.stdout, /#9101 S09 Project Review \[event\]/);
-            assert.match(result.stdout, /#9102 S09 Release Todo \[todo\]/);
+            assert.doesNotMatch(result.stdout, /S09 Release Todo/);
             assert.doesNotMatch(result.stdout, /S09 Hidden Draft/);
             assert.equal(result.stderr, "");
           },
@@ -3055,7 +3055,7 @@ try {
             const data = JSON.parse(result.stdout).data;
             assert.deepEqual(
               data.events.map((event) => event.id).sort(),
-              [9101, 9102, 9103],
+              [9101, 9103],
             );
             assert.equal(
               data.instances.some(
@@ -3094,7 +3094,7 @@ try {
             const data = JSON.parse(result.stdout).data;
             assert.deepEqual(
               data.map((event) => event.id).sort(),
-              [9101, 9102, 9103],
+              [9101, 9103],
             );
             assert(data.every((event) => event.title.startsWith("S09")));
             assert(
@@ -3140,16 +3140,17 @@ try {
 
     cases.push(
       await assertCase(
-        "real Calendar todo detail",
+        "Calendar todo ID redirects to Todos",
         ["calendar", "get", "9102", "--json"],
         {
-          exitCode: 0,
+          exitCode: 5,
           assert(result) {
-            const data = JSON.parse(result.stdout).data;
-            assert.equal(data.id, 9102);
-            assert.equal(data.type, "todo");
-            assert.equal(data.source_type, "quick_note");
-            assert.equal(data.completed, false);
+            const error = JSON.parse(result.stdout).error;
+            assert.equal(error.type, "NOT_FOUND");
+            assert.equal(
+              error.nextActions[0].command,
+              "sharge todos get 9102 --json",
+            );
           },
         },
         fullEnv,
@@ -3308,7 +3309,6 @@ try {
       description: "S10 private event description",
       location: null,
       timezone: "Asia/Shanghai",
-      type: "event",
       start_time: "2026-08-10T10:00:00+08:00",
       end_time: "2026-08-10T11:00:00+08:00",
       is_all_day: false,
@@ -3406,45 +3406,85 @@ try {
     );
 
     const createdTodo = await assertCase(
-      "real Calendar todo flags create",
-      [
-        "calendar",
-        "create",
-        "--title",
-        "S10 Release Todo",
-        "--type",
-        "todo",
-        "--start-time",
-        "2026-08-10T15:00:00+08:00",
-        "--json",
-      ],
+      "real independent todo create",
+      ["todos", "create", "--title", "S10 Release Todo", "--json"],
       {
         exitCode: 0,
         assert(result) {
           const data = JSON.parse(result.stdout).data;
-          assert.equal(data.type, "todo");
-          assert.equal(data.description, null);
-          assert.equal(data.end_time, null);
-          assert.equal(data.rrule, null);
-          assert.equal(data.enable_alarm, false);
+          assert.equal(data.title, "S10 Release Todo");
+          assert.equal(data.start_time, null);
           assert.equal(data.completed, false);
         },
       },
       realEnv,
     );
     cases.push(createdTodo);
-    const todoId = String(JSON.parse(createdTodo.stdout).data.id);
+    const todoId = JSON.parse(createdTodo.stdout).data.id;
     cases.push(
       await assertCase(
-        "public get verifies created todo",
-        ["calendar", "get", todoId, "--json"],
+        "public todo get verifies creation",
+        ["todos", "get", todoId, "--json"],
+        {
+          exitCode: 0,
+          assert(result) {
+            assert.equal(
+              JSON.parse(result.stdout).data.title,
+              "S10 Release Todo",
+            );
+          },
+        },
+        realEnv,
+      ),
+    );
+    cases.push(
+      await assertCase(
+        "partial todo update",
+        [
+          "todos",
+          "update",
+          todoId,
+          "--title",
+          "S10 Updated Todo",
+          "--start-time",
+          "2026-08-10T15:00:00+08:00",
+          "--json",
+        ],
+        {
+          exitCode: 0,
+          assert(result) {
+            assert.equal(
+              JSON.parse(result.stdout).data.title,
+              "S10 Updated Todo",
+            );
+          },
+        },
+        realEnv,
+      ),
+    );
+    cases.push(
+      await assertCase(
+        "todo clear start time",
+        ["todos", "update", todoId, "--clear-start-time", "--json"],
+        {
+          exitCode: 0,
+          assert(result) {
+            assert.equal(JSON.parse(result.stdout).data.start_time, null);
+          },
+        },
+        realEnv,
+      ),
+    );
+    cases.push(
+      await assertCase(
+        "todo single page",
+        ["todos", "list", "--limit", "1", "--json"],
         {
           exitCode: 0,
           assert(result) {
             const data = JSON.parse(result.stdout).data;
-            assert.equal(data.title, "S10 Release Todo");
-            assert.equal(data.type, "todo");
-            assert.equal(data.description, null);
+            assert.equal(data.items.length, 1);
+            assert.equal(data.items[0].id, todoId);
           },
         },
         realEnv,
@@ -3524,7 +3564,6 @@ try {
       description: null,
       location: "S10 Room",
       timezone: "Asia/Shanghai",
-      type: "event",
       start_time: "2026-08-11T09:00:00+08:00",
       end_time: "2026-08-11T09:30:00+08:00",
       is_all_day: false,
@@ -3916,7 +3955,7 @@ try {
           assert(result) {
             const data = JSON.parse(result.stdout).data;
             assert.equal(data.title, input.title);
-            assert.equal(data.type, input.type);
+            assert.equal(data.type, "event");
           },
         },
         realEnv,
@@ -3929,25 +3968,10 @@ try {
       description: `${title} private description`,
       location: "S11 private room",
       timezone: "Asia/Shanghai",
-      type: "event",
       start_time: `2026-09-${day}T09:00:00+08:00`,
       end_time: `2026-09-${day}T09:30:00+08:00`,
       is_all_day: false,
       rrule,
-      enable_alarm: false,
-      trigger_seconds: 0,
-      trigger_description: null,
-    });
-    const todoInput = (title, day) => ({
-      title,
-      description: `${title} private description`,
-      location: null,
-      timezone: "Asia/Shanghai",
-      type: "todo",
-      start_time: `2026-09-${day}T15:00:00+08:00`,
-      end_time: null,
-      is_all_day: false,
-      rrule: null,
       enable_alarm: false,
       trigger_seconds: 0,
       trigger_description: null,
@@ -3973,18 +3997,13 @@ try {
     );
     cases.push(
       await assertCase(
-        "Calendar todo status JSON help exposes product input",
-        ["calendar", "todos", "set-status", "--help", "--json"],
+        "Todos complete JSON help",
+        ["todos", "complete", "--help", "--json"],
         {
           exitCode: 0,
           assert(result) {
             const data = JSON.parse(result.stdout).data;
-            assert.equal(data.command, "calendar.todos.set-status");
-            assert.deepEqual(data.inputSchema.required, [
-              "event_ids",
-              "status",
-            ]);
-            assert.equal(data.inputSchema.additionalProperties, false);
+            assert.deepEqual(data.inputSchema.required, ["ids", "completed"]);
             assert.equal(data.retrySafe, false);
           },
         },
@@ -4314,53 +4333,53 @@ try {
       ),
     );
 
-    const todoOneId = await createCalendarItem(
-      "seed first Calendar todo",
-      todoInput("S11 Todo Alpha", "20"),
-    );
-    const todoTwoId = await createCalendarItem(
-      "seed second Calendar todo",
-      todoInput("S11 Todo Beta", "21"),
-    );
+    const createTodo = async (title) => {
+      const result = await assertCase(
+        "seed independent todo",
+        ["todos", "create", "--title", title, "--json"],
+        {
+          exitCode: 0,
+          assert(result) {
+            assert.equal(JSON.parse(result.stdout).data.title, title);
+          },
+        },
+        realEnv,
+      );
+      cases.push(result);
+      return JSON.parse(result.stdout).data.id;
+    };
+    const todoOneId = await createTodo("S11 Todo Alpha");
+    const todoTwoId = await createTodo("S11 Todo Beta");
     cases.push(
       await assertCase(
-        "real Calendar todo batch completed from flags",
+        "batch complete deduplicated todos",
         [
-          "calendar",
           "todos",
-          "set-status",
-          "--event-id",
+          "complete",
+          "--todo-id",
           todoOneId,
-          "--event-id",
+          "--todo-id",
           todoOneId,
-          "--event-id",
+          "--todo-id",
           todoTwoId,
-          "--status",
-          "completed",
+          "--completed",
+          "true",
           "--json",
         ],
         {
           exitCode: 0,
           assert(result) {
-            const data = JSON.parse(result.stdout).data;
-            assert.deepEqual(data.completed_ids.map(String), [
-              todoOneId,
-              todoTwoId,
-            ]);
-            assert.deepEqual(data.uncompleted_ids, []);
+            assert.equal(JSON.parse(result.stdout).data.changed_count, 2);
           },
         },
         realEnv,
       ),
     );
-    for (const [name, todoId] of [
-      ["public get verifies first todo completed", todoOneId],
-      ["public get verifies second todo completed", todoTwoId],
-    ]) {
+    for (const id of [todoOneId, todoTwoId])
       cases.push(
         await assertCase(
-          name,
-          ["calendar", "get", todoId, "--json"],
+          "get confirms completed todo",
+          ["todos", "get", id, "--json"],
           {
             exitCode: 0,
             assert(result) {
@@ -4370,113 +4389,97 @@ try {
           realEnv,
         ),
       );
-    }
-
-    const todoStatusPath = resolve(isolatedCwd, "s11-todo-status.json");
+    cases.push(
+      await assertCase(
+        "matching completion changes zero",
+        [
+          "todos",
+          "complete",
+          "--input",
+          JSON.stringify({ ids: [todoOneId, todoTwoId], completed: true }),
+          "--json",
+        ],
+        {
+          exitCode: 0,
+          assert(result) {
+            assert.equal(JSON.parse(result.stdout).data.changed_count, 0);
+          },
+        },
+        realEnv,
+      ),
+    );
+    const inputPath = resolve(isolatedCwd, "todo-status.json");
     await writeFile(
-      todoStatusPath,
-      `${JSON.stringify({
-        event_ids: [Number(todoOneId), Number(todoTwoId)],
-        status: "uncompleted",
-      })}\n`,
+      inputPath,
+      JSON.stringify({ ids: [todoOneId, todoTwoId], completed: false }),
     );
     cases.push(
       await assertCase(
-        "Calendar todo status file dry-run uses product model",
+        "todo file dry run",
         [
-          "calendar",
           "todos",
-          "set-status",
+          "complete",
           "--input",
-          "@s11-todo-status.json",
+          "@todo-status.json",
           "--dry-run",
           "--json",
         ],
         {
           exitCode: 0,
           assert(result) {
-            const data = JSON.parse(result.stdout).data;
-            assert.deepEqual(data.body.completed_ids, []);
-            assert.deepEqual(data.body.uncompleted_ids.map(String), [
-              todoOneId,
-              todoTwoId,
-            ]);
+            assert.deepEqual(JSON.parse(result.stdout).data.body, {
+              ids: [todoOneId, todoTwoId],
+              completed: false,
+            });
           },
         },
-        {
-          SHARGE_BASE_URL: sentinelBaseUrl,
-          SHARGE_API_KEY: null,
-          SHARGE_TIMEZONE: "Asia/Shanghai",
-        },
+        { SHARGE_BASE_URL: sentinelBaseUrl, SHARGE_API_KEY: null },
       ),
     );
     cases.push(
       await assertCase(
-        "real Calendar todo batch uncompleted from file",
-        [
-          "calendar",
-          "todos",
-          "set-status",
-          "--input",
-          "@s11-todo-status.json",
-          "--json",
-        ],
+        "restore todo from file",
+        ["todos", "complete", "--input", "@todo-status.json", "--json"],
         {
           exitCode: 0,
           assert(result) {
-            const data = JSON.parse(result.stdout).data;
-            assert.deepEqual(data.completed_ids, []);
-            assert.deepEqual(data.uncompleted_ids.map(String), [
-              todoOneId,
-              todoTwoId,
-            ]);
+            assert.equal(JSON.parse(result.stdout).data.changed_count, 2);
           },
         },
         realEnv,
       ),
     );
-    for (const [name, todoId] of [
-      ["public get verifies first todo uncompleted", todoOneId],
-      ["public get verifies second todo uncompleted", todoTwoId],
-    ]) {
-      cases.push(
-        await assertCase(
-          name,
-          ["calendar", "get", todoId, "--json"],
-          {
-            exitCode: 0,
-            assert(result) {
-              assert.equal(JSON.parse(result.stdout).data.completed, false);
-            },
-          },
-          realEnv,
-        ),
-      );
-    }
     cases.push(
       await assertCase(
-        "Calendar todo status rejects empty IDs before network",
+        "reject empty todo ids",
         [
-          "calendar",
           "todos",
-          "set-status",
+          "complete",
           "--input",
-          '{"event_ids":[],"status":"completed"}',
+          '{"ids":[],"completed":true}',
           "--dry-run",
           "--json",
         ],
         {
           exitCode: 2,
           assert(result) {
-            const envelope = JSON.parse(result.stdout);
-            assert.equal(envelope.error.field, "--event-id");
-            assert.equal(envelope.meta.requestId, null);
+            assert.equal(JSON.parse(result.stdout).error.type, "INVALID_INPUT");
           },
         },
+        { SHARGE_BASE_URL: sentinelBaseUrl, SHARGE_API_KEY: null },
+      ),
+    );
+    cases.push(
+      await assertCase(
+        "delete todo with confirmation",
+        ["todos", "delete", "--todo-id", todoTwoId, "--yes", "--json"],
         {
-          SHARGE_BASE_URL: sentinelBaseUrl,
-          SHARGE_API_KEY: null,
+          exitCode: 0,
+          assert(result) {
+            assert.equal(JSON.parse(result.stdout).data.changed_count, 1);
+          },
         },
+        realEnv,
       ),
     );
 
@@ -4517,17 +4520,14 @@ try {
     );
     cases.push(
       await assertCase(
-        "Calendar todo status unknown outcome is not retried",
+        "Todo complete unknown outcome is not retried",
         [
-          "calendar",
           "todos",
-          "set-status",
-          "--event-id",
+          "complete",
+          "--todo-id",
           todoOneId,
-          "--event-id",
-          todoTwoId,
-          "--status",
-          "completed",
+          "--completed",
+          "true",
           "--timeout",
           "1s",
           "--json",
@@ -4535,13 +4535,12 @@ try {
         {
           exitCode: 8,
           assert(result) {
-            const envelope = JSON.parse(result.stdout);
-            assert.equal(envelope.error.type, "TIMEOUT");
-            assert.equal(envelope.error.retryable, false);
-            assert.equal(envelope.error.outcome, "unknown");
+            const error = JSON.parse(result.stdout).error;
+            assert.equal(error.outcome, "unknown");
+            assert.equal(error.retryable, false);
             assert.equal(
-              envelope.error.nextActions[0].command,
-              `for id in ${todoOneId} ${todoTwoId}; do sharge calendar get "$id" --json; done`,
+              error.nextActions[0].command,
+              `sharge todos get ${todoOneId} --json`,
             );
           },
         },
@@ -4576,7 +4575,7 @@ try {
         `persistent logs leaked S11 private value: ${privateValue}`,
       );
     }
-    await unlink(todoStatusPath);
+    await unlink(inputPath);
   }
 
   if (includesSlice("S12")) {
@@ -5802,11 +5801,16 @@ with Session() as session:
     assert.deepEqual(
       manifest.files.map((file) => file.path),
       [
+        "LICENSE",
+        "README.en.md",
         "README.md",
         "dist/index.d.ts",
         "dist/index.js",
         "install.sh",
         "package.json",
+        ...["calendar", "core", "diary", "notes", "recordings", "todos"].map(
+          (name) => `skills/sharge-${name}/SKILL.md`,
+        ),
       ],
     );
     assert.equal(

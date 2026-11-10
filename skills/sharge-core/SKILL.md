@@ -1,6 +1,6 @@
 ---
 name: sharge-core
-description: 通过 sharge CLI 发现命令、检查登录与 scope、处理配置、诊断、JSON envelope、安全门禁和错误恢复。用于任何 Sharge 任务的公共前置步骤，以及登录、退出、auth、config、doctor 或 logs 请求；不负责 Notes、Calendar、Recordings、Diary 的业务选路和内容决策。
+description: 通过 sharge CLI 发现命令、检查登录与 scope、处理配置、诊断、JSON envelope、安全门禁和错误恢复。用于任何 Sharge 任务的公共前置步骤，以及登录、退出、auth、config、doctor 或 logs 请求；不负责 Notes、Calendar、Todos、Recordings、Diary 的业务选路和内容决策。
 ---
 
 # Sharge Core
@@ -56,7 +56,8 @@ sharge auth status --json
 ## Handoff
 
 - 闪记、Quick Note、Live Photo、AI Live Photo 或相关媒体交给 [sharge-notes](../sharge-notes/SKILL.md)。
-- 日历事件、待办、日历月份或时间范围交给 [sharge-calendar](../sharge-calendar/SKILL.md)。
+- 日程、日历月份或时间范围交给 [sharge-calendar](../sharge-calendar/SKILL.md)。
+- 待办交给 [sharge-todos](../sharge-todos/SKILL.md)。
 - 录音、逐字稿、overview、highlight 或音频交给 [sharge-recordings](../sharge-recordings/SKILL.md)。
 - 日记、AI Daily、明确日记月份或 `YYYYMMDD` 交给 [sharge-diary](../sharge-diary/SKILL.md)。仅说“月份”而没有资源领域时先澄清。
 - 恢复登录或 scope 后回到原领域和动作；不要把恢复本身误报为用户任务已完成。

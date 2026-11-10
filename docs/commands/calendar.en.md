@@ -1,6 +1,6 @@
 ---
 title: Calendar commands
-description: Read, search, create, update, delete, and set todo status in Calendar.
+description: Read, search, create, update and delete Calendar events.
 ---
 
 # Calendar commands
@@ -11,7 +11,7 @@ All datetimes need explicit offsets. v1 accepts structured time, not natural lan
 
 ## Business objects
 
-Calendar events keep their OpenAPI fields, including `id`, `title`, `type` (`event` or `todo`), nullable description/location, offset-aware `start_time` and `end_time`, `is_all_day`, `timezone`, `rrule`, `excluded_dates`, alarm fields, `source_type`, `source_id`, nullable `completed`, and creation/update times.
+Calendar events keep their OpenAPI fields, including `id`, `title`, `type` (`event`), nullable description/location, offset-aware `start_time` and `end_time`, `is_all_day`, `timezone`, `rrule`, `excluded_dates`, alarm fields, `source_type`, `source_id`, creation/update times.
 
 An instance has `instance_id`, `event_id`, original and actual start/end times, `trigger_start_time`, `is_cancelled`, and timestamps. IDs within JavaScript's safe integer range are JSON integers; larger decimal IDs are lossless strings. Do not convert IDs to floating-point numbers.
 
@@ -29,7 +29,7 @@ Requires `calendar:read`. The CLI accepts years `1970..2100` and months `01..12`
 sharge calendar month 2026-07 --timezone America/Los_Angeles --source-type all --json
 ```
 
-`data.dates` maps days to instances, `data.events` maps event IDs to parent objects, and `data.has_new_instances` signals changes. JSON preserves dynamic keys, snake_case fields, and newly added backend fields. Text summarizes events/todos; use JSON for full objects and instances. Repeating the read is safe.
+`data.dates` maps days to instances, `data.events` maps event IDs to parent objects, and `data.has_new_instances` signals changes. JSON preserves dynamic keys, snake_case fields, and newly added backend fields. Text summarizes events; use JSON for full objects and instances. Repeating the read is safe.
 
 ## `sharge calendar list`
 
@@ -58,7 +58,7 @@ sharge calendar search <keyword>
   [--limit <1..100>]
 ```
 
-Requires `calendar:read`; default limit is `30`. A trimmed keyword cannot be empty. The Open API searches titles of the current user's formal events/todos, excluding drafts. It does not accept `--start` or `--end` here.
+Requires `calendar:read`; default limit is `30`. A trimmed keyword cannot be empty. The Open API searches titles of the current user's formal events, excluding drafts. It does not accept `--start` or `--end` here.
 
 ```sh
 sharge calendar search "review" --limit 20 --json
@@ -72,7 +72,7 @@ sharge calendar search "review" --limit 20 --json
 sharge calendar get 123 --json
 ```
 
-Requires `calendar:read`. The ID must be a positive integer. This calls the details endpoint directly and returns a formal event or todo with original Open API fields. Drafts and items not owned by the current user return `NOT_FOUND`. Repeating the read is safe.
+Requires `calendar:read`. The ID must be a positive integer. This calls the details endpoint directly and returns a formal event with original Open API fields. Drafts and items not owned by the current user return `NOT_FOUND`. Repeating the read is safe.
 
 Read failures include `INVALID_INPUT` (exit `2`), `AUTH_REQUIRED` (`3`), `SCOPE_REQUIRED` (`4`), `NOT_FOUND` (`5`), `RATE_LIMITED` (`7`), network/timeout/server errors (`8`), and `CANCELLED` (`130`). Check the error's `nextActions`; the CLI does not expand a range or send a second query automatically.
 
@@ -84,7 +84,6 @@ Read failures include `INVALID_INPUT` (exit `2`), `AUTH_REQUIRED` (`3`), `SCOPE_
 | `description` | `--description` | Nullable, default `null` |
 | `location` | `--location` | Nullable, at most 255 characters; default `null` |
 | `timezone` | `--event-timezone` | Nullable IANA name or UTC offset; default `null` |
-| `type` | `--type` | `event` (default) or `todo` |
 | `start_time` | `--start-time` | Required, with offset |
 | `end_time` | `--end-time` | Nullable, with offset; default `null` |
 | `is_all_day` | `--is-all-day` | Explicit `true`/`false`; default `false` |
@@ -106,7 +105,7 @@ Requires `calendar:write`. For a simple event:
 
 ```sh
 sharge calendar create \
-  --title "Project meeting" --type event \
+  --title "Project meeting" \
   --start-time 2026-08-03T10:00:00-07:00 \
   --end-time 2026-08-03T11:00:00-07:00 \
   --event-timezone America/Los_Angeles --json
@@ -161,19 +160,5 @@ sharge calendar delete 123 --type future --instance-id instance_... --yes --json
 
 Dry run needs neither `--yes` nor a key and makes no network request. Actual deletion always needs `--yes`; there is no interactive prompt. It is irreversible and unsafe to repeat. On an unknown outcome, get the series; for `current`/`future`, also list the original instance range before another write.
 
-## `sharge calendar todos set-status`
 
-```text
-sharge calendar todos set-status
-  --event-id <id>... --status <completed|uncompleted>
-  [--input <json|@file|->]
-```
-
-Requires `calendar:write`. Repeat `--event-id` for a batch or pass `{"event_ids":[101,102],"status":"completed"}` to `--input`. IDs must be positive; duplicates are removed locally. The targets must be todos, and status must be `completed` or `uncompleted`.
-
-```sh
-sharge calendar todos set-status \
-  --event-id 101 --event-id 102 --status completed --json
-```
-
-Dry run displays the actual backend request body. `--generate-input` produces an offline raw product JSON template and cannot be mixed with flags, `--input`, dry run, or JSON output. Success returns the backend result arrays. There is no server idempotency key; after an unknown outcome, get **every** todo in the batch and inspect its completed state before another write.
+Calendar covers scheduled time slots with required start time, optional repetition and reminders. Todos have a title, optional start time and completion state, without repetition or reminders; use [Todos](./todos.en.md). Calendar queries only return events. A todo ID passed to calendar get returns NOT_FOUND and points to `sharge todos get <id> --json`.

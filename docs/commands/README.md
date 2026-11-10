@@ -74,7 +74,13 @@ description: sharge CLI 全部公开命令、全局选项与行为入口。
   - `create`
   - `update`
   - `delete`
-  - `todos set-status`
+- [Todos](./todos.md)
+  - `list`
+  - `get`
+  - `create`
+  - `update`
+  - `complete`
+  - `delete`
 - [Recordings](./recordings.md)
   - `list`
   - `search`
@@ -91,6 +97,7 @@ description: sharge CLI 全部公开命令、全局选项与行为入口。
 | --- | --- | --- |
 | Notes | `quick_notes:read` | `quick_notes:write` |
 | Calendar | `calendar:read` | `calendar:write` |
+| Todos | `calendar:read` | `calendar:write` |
 | Recordings | `voicemaster:read` | 不支持 |
 | Diary | `ai_daily:read` | 不支持 |
 

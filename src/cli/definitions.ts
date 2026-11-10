@@ -4,13 +4,9 @@ import { runAuthScopes } from "../commands/auth/scopes.js";
 import { runAuthStatus } from "../commands/auth/status.js";
 import {
   calendarCreateInputJsonSchema,
-  calendarTodoStatusInputJsonSchema,
   calendarUpdateInputJsonSchema,
 } from "../commands/calendar/input-contract.js";
-import {
-  runCalendarDelete,
-  runCalendarTodoSetStatus,
-} from "../commands/calendar/mutate.js";
+import { runCalendarDelete } from "../commands/calendar/mutate.js";
 import {
   runCalendarGet,
   runCalendarList,
@@ -52,6 +48,7 @@ import type { CliRuntime } from "../runtime/context.js";
 import { parseTimeoutMs } from "../runtime/duration.js";
 import type { CliErrorType, RecoveryAction } from "../runtime/errors.js";
 import { OPEN_PLATFORM_SCOPES } from "../runtime/scopes.js";
+import { todosDefinitions } from "./todos.js";
 
 export type ArgumentDefinition = {
   name: string;
@@ -402,7 +399,7 @@ const calendarEventOutputSchema = {
   properties: {
     id: noteIdOutputSchema,
     title: { type: "string" },
-    type: { type: "string", enum: ["event", "todo"] },
+    type: { type: "string", enum: ["event"] },
     description: nullableStringOutputSchema,
     location: nullableStringOutputSchema,
     start_time: { type: "string", format: "date-time" },
@@ -429,9 +426,6 @@ const calendarEventOutputSchema = {
       enum: ["manual", "quick_note", "audio_recorded"],
     },
     source_id: nullableStringOutputSchema,
-    completed: {
-      anyOf: [{ type: "boolean" }, { type: "null" }],
-    },
     created_at: { type: "string", format: "date-time" },
     updated_at: { type: "string", format: "date-time" },
   },
@@ -538,22 +532,6 @@ const calendarUpdateResultOutputSchema = {
     deleted_events: {
       type: "array",
       items: calendarEventOutputSchema,
-    },
-  },
-};
-
-const calendarTodoStatusOutputSchema = {
-  type: "object",
-  additionalProperties: true,
-  required: ["completed_ids", "uncompleted_ids"],
-  properties: {
-    completed_ids: {
-      type: "array",
-      items: noteIdOutputSchema,
-    },
-    uncompleted_ids: {
-      type: "array",
-      items: noteIdOutputSchema,
     },
   },
 };
@@ -870,7 +848,6 @@ function calendarWriteOptions(
     "--description",
     "--location",
     "--event-timezone",
-    "--type",
     "--start-time",
     "--end-time",
     "--is-all-day",
@@ -902,12 +879,6 @@ function calendarWriteOptions(
     business(
       "--event-timezone",
       "业务对象 timezone：IANA 名或 UTC±HH:MM；省略时为 null",
-    ),
-    business(
-      "--type",
-      "Calendar 类型：event 或 todo",
-      ["event", "todo"],
-      "event",
     ),
     business("--start-time", "开始时间，必须带显式 offset；flags 模式必填"),
     business("--end-time", "结束时间，必须带显式 offset；省略时为 null"),
@@ -993,7 +964,6 @@ function calendarWriteHandlerOptions(context: CommandContext) {
     description: stringOption("--description"),
     location: stringOption("--location"),
     eventTimezone: stringOption("--event-timezone"),
-    type: stringOption("--type"),
     startTime: stringOption("--start-time"),
     endTime: stringOption("--end-time"),
     isAllDay: stringOption("--is-all-day"),
@@ -1691,7 +1661,7 @@ export const commandDefinitions: CommandDefinition[] = [
   {
     command: "calendar",
     path: ["calendar"],
-    description: "读取和管理 Calendar",
+    description: "读取和管理日程",
     requiredScopes: [],
     arguments: [],
     options: [],
@@ -1711,7 +1681,7 @@ export const commandDefinitions: CommandDefinition[] = [
   {
     command: "calendar.month",
     path: ["calendar", "month"],
-    description: "读取一个明确月份的 Calendar 月视图",
+    description: "读取一个明确月份的日程月视图",
     requiredScopes: [...apiOperations.calendarMonth.requiredScopes],
     arguments: [
       {
@@ -1756,7 +1726,7 @@ export const commandDefinitions: CommandDefinition[] = [
   {
     command: "calendar.list",
     path: ["calendar", "list"],
-    description: "读取不超过 31 天的明确 Calendar 时间范围",
+    description: "读取不超过 31 天的明确时间范围内的日程",
     requiredScopes: [...apiOperations.calendarList.requiredScopes],
     arguments: [],
     options: [
@@ -1826,7 +1796,7 @@ export const commandDefinitions: CommandDefinition[] = [
   {
     command: "calendar.search",
     path: ["calendar", "search"],
-    description: "按标题搜索当前用户的正式 Calendar item",
+    description: "按标题搜索当前用户的正式日程",
     requiredScopes: [...apiOperations.calendarSearch.requiredScopes],
     arguments: [
       {
@@ -1887,12 +1857,12 @@ export const commandDefinitions: CommandDefinition[] = [
   {
     command: "calendar.get",
     path: ["calendar", "get"],
-    description: "按 ID 读取一个正式 Calendar event 或 todo",
+    description: "按 ID 读取一条正式日程",
     requiredScopes: [...apiOperations.calendarGet.requiredScopes],
     arguments: [
       {
         name: "event-id",
-        description: "Calendar item 正整数 ID",
+        description: "日程正整数 ID",
         required: true,
         variadic: false,
       },
@@ -1925,7 +1895,7 @@ export const commandDefinitions: CommandDefinition[] = [
   {
     command: "calendar.create",
     path: ["calendar", "create"],
-    description: "创建正式 Calendar event 或 todo",
+    description: "创建正式日程",
     requiredScopes: [...apiOperations.calendarCreate.requiredScopes],
     arguments: [],
     options: calendarWriteOptions(false),
@@ -1956,12 +1926,12 @@ export const commandDefinitions: CommandDefinition[] = [
   {
     command: "calendar.update",
     path: ["calendar", "update"],
-    description: "使用完整 PUT 更新 Calendar event、todo 或重复实例",
+    description: "使用完整 PUT 更新日程或重复实例",
     requiredScopes: [...apiOperations.calendarUpdate.requiredScopes],
     arguments: [
       {
         name: "event-id",
-        description: "Calendar item 正整数 ID",
+        description: "日程正整数 ID",
         required: true,
         variadic: false,
       },
@@ -1998,12 +1968,12 @@ export const commandDefinitions: CommandDefinition[] = [
   {
     command: "calendar.delete",
     path: ["calendar", "delete"],
-    description: "删除整个 Calendar item、当前实例或当前及未来实例",
+    description: "删除整条日程、当前实例或当前及未来实例",
     requiredScopes: [...apiOperations.calendarDelete.requiredScopes],
     arguments: [
       {
         name: "event-id",
-        description: "Calendar item 正整数 ID",
+        description: "日程正整数 ID",
         required: true,
         variadic: false,
       },
@@ -2083,144 +2053,7 @@ export const commandDefinitions: CommandDefinition[] = [
             : undefined,
       }),
   },
-  {
-    command: "calendar.todos",
-    path: ["calendar", "todos"],
-    description: "管理 Calendar Todo 状态",
-    requiredScopes: [],
-    arguments: [],
-    options: [],
-    inputSchema: null,
-    outputSchema: { type: "object" },
-    network: false,
-    sideEffects: [],
-    destructive: false,
-    dryRun: false,
-    retrySafe: true,
-    timeout: null,
-    pagination: null,
-    errors: ["INVALID_COMMAND"],
-    examples: [
-      "sharge calendar todos --help",
-      "sharge calendar todos --help --json",
-    ],
-    handler: null,
-  },
-  {
-    command: "calendar.todos.set-status",
-    path: ["calendar", "todos", "set-status"],
-    description: "批量将 Calendar Todo 标记为已完成或未完成",
-    requiredScopes: [...apiOperations.calendarTodoStatus.requiredScopes],
-    arguments: [],
-    options: [
-      {
-        name: "--event-id",
-        aliases: [],
-        type: "string",
-        description: "目标 Todo 正整数 ID；可重复",
-        default: null,
-        enum: null,
-        repeatable: true,
-        exclusiveWith: ["--input", "--generate-input"],
-      },
-      {
-        name: "--status",
-        aliases: [],
-        type: "string",
-        description: "目标状态：completed 或 uncompleted",
-        default: null,
-        enum: ["completed", "uncompleted"],
-        repeatable: false,
-        exclusiveWith: ["--input", "--generate-input"],
-      },
-      {
-        name: "--input",
-        aliases: [],
-        type: "string",
-        description: "产品 JSON：inline、@file 或 -（stdin）",
-        default: null,
-        enum: null,
-        repeatable: false,
-        exclusiveWith: ["--event-id", "--status", "--generate-input"],
-      },
-      {
-        name: "--generate-input",
-        aliases: [],
-        type: "boolean",
-        description: "离线输出原始产品 JSON 模板",
-        default: false,
-        enum: null,
-        repeatable: false,
-        exclusiveWith: [
-          "--event-id",
-          "--status",
-          "--input",
-          "--dry-run",
-          "--json",
-          "--jq",
-        ],
-      },
-      {
-        name: "--dry-run",
-        aliases: [],
-        type: "boolean",
-        description: "只输出零网络状态更新计划",
-        default: false,
-        enum: null,
-        repeatable: false,
-        exclusiveWith: ["--generate-input"],
-      },
-    ],
-    inputSchema: calendarTodoStatusInputJsonSchema,
-    outputSchema: {
-      anyOf: [calendarTodoStatusOutputSchema, dryRunPlanOutputSchema],
-    },
-    network: true,
-    sideEffects: ["update_calendar_todo_status"],
-    destructive: false,
-    dryRun: true,
-    retrySafe: false,
-    timeout: 30_000,
-    pagination: null,
-    errors: calendarReadErrors,
-    examples: [
-      "sharge calendar todos set-status --event-id 101 --event-id 102 --status completed --json",
-      "sharge calendar todos set-status --input @status.json --dry-run --json",
-      "sharge calendar todos set-status --generate-input",
-    ],
-    handler: async (context) =>
-      runCalendarTodoSetStatus(context.runtime, {
-        eventIds: Array.isArray(context.options["--event-id"])
-          ? context.options["--event-id"]
-          : typeof context.options["--event-id"] === "string"
-            ? [context.options["--event-id"]]
-            : [],
-        status:
-          typeof context.options["--status"] === "string"
-            ? context.options["--status"]
-            : undefined,
-        input:
-          typeof context.options["--input"] === "string"
-            ? context.options["--input"]
-            : undefined,
-        generateInput: context.options["--generate-input"] === true,
-        dryRun: context.options["--dry-run"] === true,
-        json: context.options["--json"] === true,
-        jq:
-          typeof context.options["--jq"] === "string"
-            ? context.options["--jq"]
-            : undefined,
-        timeoutMs: parseTimeoutMs(
-          typeof context.options["--timeout"] === "string"
-            ? context.options["--timeout"]
-            : undefined,
-        ),
-        timezoneOverride:
-          typeof context.options["--timezone"] === "string"
-            ? context.options["--timezone"]
-            : undefined,
-      }),
-  },
+  ...todosDefinitions(dryRunPlanOutputSchema),
   {
     command: "recordings",
     path: ["recordings"],

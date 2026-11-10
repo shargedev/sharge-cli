@@ -9,7 +9,7 @@
 
 The official command-line client for Sharge Open Platform. It is designed for AI agents and provides a clear login, configuration, and troubleshooting experience for people.
 
-It covers AI Live Photo, Calendar, Recordings, and AI Diary, with machine-readable help, a stable JSON contract, explicit dry runs, safe downloads, and actionable errors.
+It covers AI Live Photo, Calendar, Todos, Recordings, and AI Diary, with machine-readable help, a stable JSON contract, explicit dry runs, safe downloads, and actionable errors.
 
 [Website](https://shargedev.github.io/sharge-cli/en/) · [Documentation](https://shargedev.github.io/sharge-cli/en/docs/) · [Quick start](#install-and-quick-start) · [Agent quick start](#agent-quick-start) · [Capabilities](#capabilities) · [Commands](#command-overview) · [Safety](#safety-and-risks) · [Repository documentation](./docs/README.en.md)
 
@@ -27,7 +27,8 @@ It covers AI Live Photo, Calendar, Recordings, and AI Diary, with machine-readab
 | Area | Capabilities |
 | --- | --- |
 | AI Live Photo (`notes`) | List, search, view details, update, delete, and download media |
-| Calendar (`calendar`) | Month view, date-range reads, search, details, create, update, delete, and todo status |
+| Calendar (`calendar`) | Month view, date-range reads, search, details, create, update, and delete events |
+| Todos (`todos`) | Single-page list, get, create, partial update, complete and delete |
 | Recordings (`recordings`) | List, search, rich details, and audio download |
 | AI Diary (`diary`) | Read by month, search, and view diary details |
 | Authentication and configuration | Browser login, scopes, diagnostics, configuration, and redacted logs |
@@ -140,7 +141,7 @@ sharge
 ├── logs path|clear
 ├── notes list|search|get|update|delete|download
 ├── calendar month|list|search|get|create|update|delete
-├── calendar todos set-status
+├── todos list|get|create|update|complete|delete
 ├── recordings list|search|get|download
 └── diary list|search|get
 ```
@@ -197,11 +198,12 @@ See [authentication](./docs/authentication.en.md) and [configuration](./docs/con
 
 ## Agent Skills
 
-The repository provides five Agent Skills in [`skills/`](./skills), aligned with the current CLI:
+The repository provides six Agent Skills in [`skills/`](./skills), aligned with the current CLI:
 
 - `sharge-core`
 - `sharge-notes`
 - `sharge-calendar`
+- `sharge-todos`
 - `sharge-recordings`
 - `sharge-diary`
 
@@ -211,7 +213,7 @@ They use the CLI's `--help --json` as the source of truth for commands. The foll
 npm run skills:validate
 ```
 
-The npm package includes all five Skills in `skills/`, released with the same CLI version. After a global install they are available at `$(npm root -g)/@sharge/cli/skills/`. Register them for your agent from the local package:
+The npm package includes all six Skills in `skills/`, released with the same CLI version. After a global install they are available at `$(npm root -g)/@sharge/cli/skills/`. Register them for your agent from the local package:
 
 ```sh
 npx skills add "$(npm root -g)/@sharge/cli" -y -g

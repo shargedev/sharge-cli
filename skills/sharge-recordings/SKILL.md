@@ -41,5 +41,5 @@ sharge recordings download --help --json
 ## Handoff
 
 - 鉴权、scope、配置、envelope 和通用恢复交给 [sharge-core](../sharge-core/SKILL.md)，恢复后回到本 Skill。
-- 用户明确要求把录音结论写入 Note 或 Calendar 时，先完成读取，再把最小必要内容与原始 Recording ID 交给 [sharge-notes](../sharge-notes/SKILL.md) 或 [sharge-calendar](../sharge-calendar/SKILL.md)；目标 Skill 重新确认写入意图。
+- 用户明确要求把录音结论写入 Note、日程或待办时，先完成读取，再把最小必要内容与原始 Recording ID 交给 [sharge-notes](../sharge-notes/SKILL.md)、[sharge-calendar](../sharge-calendar/SKILL.md) 或 [sharge-todos](../sharge-todos/SKILL.md)；目标 Skill 重新确认写入意图。
 - 日记内容交给 [sharge-diary](../sharge-diary/SKILL.md)，不要因为两者都有总结文本就混用资源。

@@ -12,7 +12,7 @@ import packageJson from '../../../package.json';
   </div>
   <Pagination />
   <div class="release">
-    <span>latest · v{packageJson.version}</span>
+    <span>{packageJson.version.includes('-alpha.') ? 'alpha' : 'latest'} · v{packageJson.version}</span>
     <a href="https://github.com/shargedev/sharge-cli/blob/main/CHANGELOG.md" rel="noreferrer">
       Changelog
     </a>

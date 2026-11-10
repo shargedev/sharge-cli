@@ -156,7 +156,7 @@ printf '%s\n' '{"title":"更新","content":null}' |
 
 - Calendar create/update；
 - Calendar 重复实例修改；
-- Calendar todo 批量状态；
+- Todos 批量完成/恢复；
 - Notes update；
 - 任何 delete。
 

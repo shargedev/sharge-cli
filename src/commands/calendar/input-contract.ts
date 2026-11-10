@@ -5,7 +5,6 @@ export const calendarCreateFieldNames = [
   "description",
   "location",
   "timezone",
-  "type",
   "start_time",
   "end_time",
   "is_all_day",
@@ -84,7 +83,6 @@ const createShape = {
   description: z.string().nullable().optional().default(null),
   location: z.string().max(255).nullable().optional().default(null),
   timezone: eventTimezone.nullable().optional().default(null),
-  type: z.enum(["event", "todo"]).optional().default("event"),
   start_time: offsetDateTime,
   end_time: offsetDateTime.nullable().optional().default(null),
   is_all_day: z.boolean().optional().default(false),
@@ -101,7 +99,6 @@ const updateShape = {
   description: z.string().nullable(),
   location: z.string().max(255).nullable(),
   timezone: eventTimezone.nullable(),
-  type: z.enum(["event", "todo"]),
   start_time: offsetDateTime,
   end_time: offsetDateTime.nullable(),
   is_all_day: z.boolean(),
@@ -153,7 +150,6 @@ const createProperties = {
     anyOf: [{ type: "string", maxLength: 255 }, { type: "null" }],
   },
   timezone: nullableStringJsonSchema,
-  type: { type: "string", enum: ["event", "todo"], default: "event" },
   start_time: { type: "string", format: "date-time" },
   end_time: nullableDateTimeJsonSchema,
   is_all_day: { type: "boolean", default: false },
@@ -189,47 +185,3 @@ export const calendarUpdateInputJsonSchema = {
 
 export type CalendarCreateInput = z.output<typeof calendarCreateZodSchema>;
 export type CalendarUpdateInput = z.output<typeof calendarUpdateZodSchema>;
-
-const calendarId = z.union([
-  z.number().int().positive().safe(),
-  z.string().regex(/^[1-9]\d*$/),
-]);
-
-export const calendarTodoStatusZodSchema = z
-  .object({
-    event_ids: z.array(calendarId).min(1),
-    status: z.enum(["completed", "uncompleted"]),
-  })
-  .strict()
-  .transform((value) => ({
-    ...value,
-    event_ids: [
-      ...new Map(value.event_ids.map((id) => [String(id), id])).values(),
-    ],
-  }));
-
-export const calendarTodoStatusInputJsonSchema = {
-  type: "object",
-  additionalProperties: false,
-  required: ["event_ids", "status"],
-  properties: {
-    event_ids: {
-      type: "array",
-      minItems: 1,
-      items: {
-        anyOf: [
-          { type: "integer", minimum: 1 },
-          { type: "string", pattern: "^[1-9]\\d*$" },
-        ],
-      },
-    },
-    status: {
-      type: "string",
-      enum: ["completed", "uncompleted"],
-    },
-  },
-};
-
-export type CalendarTodoStatusInput = z.output<
-  typeof calendarTodoStatusZodSchema
->;

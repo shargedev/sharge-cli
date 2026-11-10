@@ -1,4 +1,9 @@
-import { isSafeNumber, parse as parseLosslessJson } from "lossless-json";
+import {
+  isSafeNumber,
+  LosslessNumber,
+  parse as parseLosslessJson,
+  stringify as stringifyLosslessJson,
+} from "lossless-json";
 import packageJson from "../../package.json" with { type: "json" };
 import type { CliRuntime } from "../runtime/context.js";
 import { CliFailure } from "../runtime/errors.js";
@@ -253,6 +258,7 @@ export async function requestJson<T>(
     path: string;
     timeoutMs?: number;
     body?: unknown;
+    integerIds?: boolean;
     sensitiveValues?: string[];
     acceptedHttpStatuses?: number[];
   },
@@ -285,7 +291,21 @@ export async function requestJson<T>(
       method: options.method,
       headers,
       ...(options.body !== undefined
-        ? { body: JSON.stringify(options.body) }
+        ? {
+            body:
+              options.integerIds &&
+              typeof options.body === "object" &&
+              options.body !== null &&
+              "ids" in options.body &&
+              Array.isArray(options.body.ids)
+                ? stringifyLosslessJson({
+                    ...options.body,
+                    ids: options.body.ids.map(
+                      (id: string) => new LosslessNumber(id),
+                    ),
+                  })
+                : JSON.stringify(options.body),
+          }
         : {}),
       signal: runtime.signal
         ? AbortSignal.any([

@@ -13,6 +13,7 @@ CLI 覆盖四类产品数据：
 | --- | --- |
 | `notes` | AI Live Photo(闪记) |
 | `calendar` | Calendar、日程、闪极日程、Loomos Calendar |
+| `todos` | Todos |
 | `recordings` | 录音、Voice Recording、闪极录音、Loomos Recording |
 | `diary` | 日记、AI 日记、闪极日记、Loomos Diary |
 
@@ -81,7 +82,7 @@ sharge
 ├── logs path|clear
 ├── notes list|search|get|update|delete|download
 ├── calendar month|list|search|get|create|update|delete
-├── calendar todos set-status
+├── todos list|get|create|update|complete|delete
 ├── recordings list|search|get|download
 └── diary list|search|get
 ```
@@ -109,3 +110,5 @@ Open API 不允许创建 AI Live Photo(闪记)，因此不存在 `sharge notes c
 - 时间和月份：应替换成任务需要的明确值。
 
 JSON 业务字段保持 Open API 原始命名，通常是 `snake_case`；CLI 自有 envelope 字段使用 `camelCase`。
+
+- [Todos](./commands/todos.md): list / get / create / update / complete / delete。

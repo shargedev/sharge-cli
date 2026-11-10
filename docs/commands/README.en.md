@@ -36,7 +36,8 @@ Download commands may offer `--file <path>`, `--overwrite`, and `--dry-run`. The
 ## Product commands
 
 - [AI Live Photo (`notes`)](./notes.en.md): `list`, `search`, `get`, `update`, `delete`, `download`.
-- [Calendar](./calendar.en.md): `month`, `list`, `search`, `get`, `create`, `update`, `delete`, `todos set-status`.
+- [Calendar](./calendar.en.md): `month`, `list`, `search`, `get`, `create`, `update`, `delete`.
+- [Todos](./todos.en.md): `list`, `get`, `create`, `update`, `complete`, `delete`.
 - [Recordings](./recordings.en.md): `list`, `search`, `get`, `download`.
 - [AI Diary](./diary.en.md): `list`, `search`, `get`.
 

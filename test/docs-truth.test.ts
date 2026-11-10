@@ -44,6 +44,7 @@ describe("repository truth", () => {
       "system.md",
       "notes.md",
       "calendar.md",
+      "todos.md",
       "recordings.md",
       "diary.md",
     ];
@@ -60,7 +61,7 @@ describe("repository truth", () => {
     const namespaceOnly = new Set([
       "notes",
       "calendar",
-      "calendar.todos",
+      "todos",
       "recordings",
       "diary",
       "auth",

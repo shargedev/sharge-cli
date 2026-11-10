@@ -13,6 +13,7 @@ The CLI covers four product areas:
 | --- | --- |
 | `notes` | AI Live Photo |
 | `calendar` | Calendar |
+| `todos` | Todos |
 | `recordings` | Recordings |
 | `diary` | AI Diary |
 
@@ -82,7 +83,7 @@ sharge
 ├── logs path|clear
 ├── notes list|search|get|update|delete|download
 ├── calendar month|list|search|get|create|update|delete
-├── calendar todos set-status
+├── todos list|get|create|update|complete|delete
 ├── recordings list|search|get|download
 └── diary list|search|get
 ```
@@ -103,3 +104,5 @@ The Open API does not support creating AI Live Photo items, so `sharge notes cre
 ## Example values
 
 Replace placeholder IDs, dates, times, and months with values for your task. `lms-REDACTED` represents a redacted API key; never put a real key into a command or document.
+
+- [Todos](./commands/todos.en.md): list / get / create / update / complete / delete。

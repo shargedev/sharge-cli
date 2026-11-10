@@ -241,6 +241,7 @@ function appendSourceTypeQuery(
   query: URLSearchParams,
   options: CalendarReadOptions,
 ): void {
+  query.set("type", "event");
   if (options.sourceType !== undefined) {
     query.set("source_type", options.sourceType);
   }
@@ -329,6 +330,7 @@ export async function runCalendarSearch(
     throw invalidInput("search", "--limit", "--limit 必须是 1–100 的整数。");
   }
   const query = new URLSearchParams({ keyword: normalizedKeyword });
+  query.set("type", "event");
   if (options.sourceType !== undefined) {
     query.set("source_type", options.sourceType);
   }
@@ -389,5 +391,17 @@ export async function runCalendarGet(
     throw error;
   }
   const event = requireRecord(response, "get");
+  if (event.type === "todo")
+    throw new CliFailure({
+      type: "NOT_FOUND",
+      exitCode: 5,
+      message: "该 ID 是待办，不是日程；改用 sharge todos get 读取。",
+      requestId: response.requestId,
+      httpStatus: response.httpStatus,
+      nextAction: {
+        description: "读取待办",
+        command: `sharge todos get ${eventId} --json`,
+      },
+    });
   return execution(response, resolved, itemLine(event));
 }

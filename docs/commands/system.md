@@ -18,7 +18,7 @@ JSON `data`：
 
 ```json
 {
-  "version": "0.2.4"
+  "version": "0.3.0-alpha.0"
 }
 ```
 

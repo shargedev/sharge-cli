@@ -154,12 +154,13 @@ test('仓库公开入口与 Pages 发布配置指向静态站', async () => {
   assert.deepEqual(rootPackage.files, ['dist', 'README.md', 'install.sh', 'skills']);
 });
 
-test('latest 文档显示构建版本并链接 Changelog', async () => {
+test('文档显示构建版本并链接 Changelog', async () => {
   const html = await readFile(
     new URL('../dist/docs/getting-started/index.html', import.meta.url),
     'utf8'
   );
 
-  assert.ok(html.includes('v0.2.4'));
+  const { version } = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8'));
+  assert.ok(html.includes(`v${version}`));
   assert.ok(html.includes('https://github.com/shargedev/sharge-cli/blob/main/CHANGELOG.md'));
 });

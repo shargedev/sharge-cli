@@ -13,7 +13,7 @@ You need Node.js 20 or newer and npm. Install the CLI from npm:
 npm install --global @sharge/cli@latest
 ```
 
-If an AI agent will use sharge, install the five Skills from this repository for your user:
+If an AI agent will use sharge, install the six Skills from this repository for your user:
 
 ```sh
 npx skills add shargedev/sharge-cli -y -g

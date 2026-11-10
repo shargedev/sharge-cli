@@ -12,6 +12,7 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const cleanupPaths: string[] = [];
 const requiredSkills = [
   "sharge-calendar",
+  "sharge-todos",
   "sharge-core",
   "sharge-diary",
   "sharge-notes",
@@ -71,7 +72,6 @@ describe("release package", () => {
       "闪记",
       "Live Photo",
       "AI Live Photo",
-      "日程",
       "闪极日程",
       "Loomos Calendar",
       "闪极录音",
@@ -84,7 +84,7 @@ describe("release package", () => {
     }
   });
 
-  it("packs and installs the CLI and matching five Skills into an isolated prefix", async () => {
+  it("packs and installs the CLI and matching six Skills into an isolated prefix", async () => {
     const workspace = await temporaryDirectory("sharge-package-");
     const prefix = join(workspace, "prefix");
     const home = join(workspace, "home");
@@ -110,7 +110,7 @@ describe("release package", () => {
       "dist/index.js",
       "install.sh",
       "package.json",
-      ...skillPaths,
+      ...[...skillPaths].sort(),
     ]);
     expect(paths.some((path: string) => path.startsWith("plans/"))).toBe(false);
     expect(paths.some((path: string) => path.endsWith(".map"))).toBe(false);
@@ -180,7 +180,7 @@ describe("release package", () => {
     );
     expect(JSON.parse(validation.stdout)).toMatchObject({
       ok: true,
-      skills: 5,
+      skills: 6,
     });
   }, 60_000);
 

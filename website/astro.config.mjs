@@ -96,6 +96,7 @@ export default defineConfig({
             { slug: 'docs/commands/system' },
             { slug: 'docs/commands/notes' },
             { slug: 'docs/commands/calendar' },
+            { slug: 'docs/commands/todos' },
             { slug: 'docs/commands/recordings' },
             { slug: 'docs/commands/diary' },
           ],

@@ -15,7 +15,7 @@ description: 安装 sharge CLI 与 Agent Skills，完成登录并读取第一条
 npm install --global @sharge/cli@latest
 ```
 
-如果你会让 AI Agent 使用 sharge，再全局安装仓库提供的五个 Skills：
+如果你会让 AI Agent 使用 sharge，再全局安装仓库提供的六个 Skills：
 
 ```sh
 npx skills add shargedev/sharge-cli -y -g

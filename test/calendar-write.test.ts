@@ -99,7 +99,7 @@ const completeCreate = {
   description: null,
   location: null,
   timezone: "Asia/Shanghai",
-  type: "event",
+
   start_time: "2026-08-03T10:00:00+08:00",
   end_time: "2026-08-03T11:00:00+08:00",
   is_all_day: false,
@@ -184,9 +184,7 @@ describe("calendar write commands", () => {
         "calendar",
         "create",
         "--title",
-        "待办",
-        "--type",
-        "todo",
+        "日程",
         "--start-time",
         "2026-08-03T10:00:00Z",
         "--trigger-seconds",
@@ -208,11 +206,11 @@ describe("calendar write commands", () => {
 
     expect(exitCode).toBe(0);
     expect(JSON.parse(capture.stdout()).data.body).toEqual({
-      title: "待办",
+      title: "日程",
       description: null,
       location: null,
       timezone: null,
-      type: "todo",
+
       start_time: "2026-08-03T10:00:00Z",
       end_time: null,
       is_all_day: false,
@@ -451,8 +449,6 @@ describe("calendar write commands", () => {
         "123",
         "--title",
         "flags replacement",
-        "--type",
-        "todo",
         "--start-time",
         "2026-08-04T09:00:00Z",
         "--trigger-seconds",
@@ -478,7 +474,7 @@ describe("calendar write commands", () => {
       description: null,
       location: null,
       timezone: null,
-      type: "todo",
+
       start_time: "2026-08-04T09:00:00Z",
       end_time: null,
       is_all_day: false,
@@ -687,7 +683,7 @@ describe("calendar write commands", () => {
       description: null,
       location: null,
       timezone: null,
-      type: "event",
+
       start_time: "",
       end_time: null,
       is_all_day: false,
@@ -834,7 +830,6 @@ describe("calendar write commands", () => {
           "description",
           "location",
           "timezone",
-          "type",
           "start_time",
           "end_time",
           "is_all_day",
@@ -851,7 +846,6 @@ describe("calendar write commands", () => {
     expect(data.options).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "--title", default: null }),
-        expect.objectContaining({ name: "--type", default: "event" }),
         expect.objectContaining({ name: "--is-all-day", default: "false" }),
         expect.objectContaining({ name: "--trigger-seconds", default: "0" }),
         expect.objectContaining({

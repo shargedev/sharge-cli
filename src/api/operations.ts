@@ -136,14 +136,57 @@ export const apiOperations = {
     responseSchemaRef:
       "#/components/schemas/OpenApiResponse_OpenApiCalendarUpdateResultDTO_",
   },
-  calendarTodoStatus: {
-    method: "PATCH",
-    path: "/open-api/v1/ai-calendar/todos/status",
-    openApiPath: "/ai-calendar/todos/status",
-    requiredScopes: ["calendar:write"],
-    requestSchemaRef: "#/components/schemas/UpdateTodoStatusRequestDTO",
+  todosList: {
+    method: "GET",
+    path: "/open-api/v1/todos",
+    openApiPath: "/todos",
+    requiredScopes: ["calendar:read"],
+    requestSchemaRef: null,
     responseSchemaRef:
-      "#/components/schemas/OpenApiResponse_UpdateTodoStatusResultDTO_",
+      "#/components/schemas/OpenApiResponse_OpenApiTodoPageDTO_",
+  },
+  todosGet: {
+    method: "GET",
+    path: "/open-api/v1/todos/{id}",
+    openApiPath: "/todos/{id}",
+    requiredScopes: ["calendar:read"],
+    requestSchemaRef: null,
+    responseSchemaRef: "#/components/schemas/OpenApiResponse_OpenApiTodoDTO_",
+  },
+  todosCreate: {
+    method: "POST",
+    path: "/open-api/v1/todos",
+    openApiPath: "/todos",
+    requiredScopes: ["calendar:write"],
+    requestSchemaRef: "#/components/schemas/CreateOpenApiTodoRequestDTO",
+    responseSchemaRef: "#/components/schemas/OpenApiResponse_OpenApiTodoDTO_",
+    successStatus: "201",
+  },
+  todosUpdate: {
+    method: "PATCH",
+    path: "/open-api/v1/todos/{id}",
+    openApiPath: "/todos/{id}",
+    requiredScopes: ["calendar:write"],
+    requestSchemaRef: "#/components/schemas/UpdateOpenApiTodoRequestDTO",
+    responseSchemaRef: "#/components/schemas/OpenApiResponse_OpenApiTodoDTO_",
+  },
+  todosComplete: {
+    method: "PATCH",
+    path: "/open-api/v1/todos/completion",
+    openApiPath: "/todos/completion",
+    requiredScopes: ["calendar:write"],
+    requestSchemaRef: "#/components/schemas/CompleteOpenApiTodosRequestDTO",
+    responseSchemaRef:
+      "#/components/schemas/OpenApiResponse_OpenApiTodoChangedDTO_",
+  },
+  todosDelete: {
+    method: "DELETE",
+    path: "/open-api/v1/todos",
+    openApiPath: "/todos",
+    requiredScopes: ["calendar:write"],
+    requestSchemaRef: "#/components/schemas/OpenApiTodoIdsRequestDTO",
+    responseSchemaRef:
+      "#/components/schemas/OpenApiResponse_OpenApiTodoChangedDTO_",
   },
   recordingsList: {
     method: "GET",

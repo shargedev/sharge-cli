@@ -98,7 +98,11 @@ async function recoverCalendarPermission(
 
 export async function requestCalendar<T>(
   runtime: CliRuntime,
-  options: CalendarRequestContext & { path: string; body?: unknown },
+  options: CalendarRequestContext & {
+    path: string;
+    body?: unknown;
+    integerIds?: boolean;
+  },
 ): Promise<ApiResponse<T>> {
   try {
     return await requestJson<T>(runtime, {
@@ -108,6 +112,7 @@ export async function requestCalendar<T>(
       method: options.operation.method,
       path: options.path,
       ...(options.body === undefined ? {} : { body: options.body }),
+      integerIds: options.integerIds,
       timeoutMs: remainingCalendarTimeout(runtime, options),
     });
   } catch (error) {

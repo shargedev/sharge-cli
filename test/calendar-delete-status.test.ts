@@ -97,7 +97,7 @@ const deleteResult = {
   deleted_events: [{ id: 124 }],
 };
 
-describe("calendar delete and todo status commands", () => {
+describe("calendar delete commands", () => {
   it("builds a zero-network delete dry-run without --yes or credentials", async () => {
     let requests = 0;
     const server = await startServer((_request, response) => {
@@ -331,251 +331,11 @@ describe("calendar delete and todo status commands", () => {
     }
   });
 
-  it("maps repeated todo flags to the backend body and deduplicates IDs", async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), "sharge-todo-dry-"));
-    cleanupPaths.push(homeDir);
-    const capture = captureIo();
-
-    const exitCode = await main(
-      [
-        "node",
-        "sharge",
-        "calendar",
-        "todos",
-        "set-status",
-        "--event-id",
-        "101",
-        "--event-id",
-        "101",
-        "--event-id",
-        "102",
-        "--status",
-        "completed",
-        "--dry-run",
-        "--json",
-      ],
-      {
-        env: {
-          SHARGE_BASE_URL: "http://127.0.0.1:1",
-          SHARGE_TIMEZONE: "Asia/Shanghai",
-        },
-        homeDir,
-        cwd: homeDir,
-        platform: process.platform,
-      },
-      capture.io,
-    );
-
-    expect(exitCode).toBe(0);
-    expect(JSON.parse(capture.stdout())).toMatchObject({
-      command: "calendar.todos.set-status",
-      data: {
-        method: "PATCH",
-        path: "/open-api/v1/ai-calendar/todos/status",
-        body: {
-          completed_ids: [101, 102],
-          uncompleted_ids: [],
-        },
-        retrySafe: false,
-      },
-    });
-  });
-
-  it("loads product input and maps uncompleted status to the backend body", async () => {
-    const cwd = await mkdtemp(join(tmpdir(), "sharge-todo-input-"));
-    const homeDir = await mkdtemp(join(tmpdir(), "sharge-todo-home-"));
-    cleanupPaths.push(cwd, homeDir);
-    await writeFile(
-      join(cwd, "status.json"),
-      '{"event_ids":[201,202],"status":"uncompleted"}\n',
-    );
-    const capture = captureIo();
-
-    const exitCode = await main(
-      [
-        "node",
-        "sharge",
-        "calendar",
-        "todos",
-        "set-status",
-        "--input",
-        "@status.json",
-        "--dry-run",
-        "--json",
-      ],
-      {
-        env: {
-          SHARGE_BASE_URL: "http://127.0.0.1:1",
-          SHARGE_TIMEZONE: "Asia/Shanghai",
-        },
-        homeDir,
-        cwd,
-        platform: process.platform,
-      },
-      capture.io,
-    );
-
-    expect(exitCode).toBe(0);
-    expect(JSON.parse(capture.stdout()).data.body).toEqual({
-      completed_ids: [],
-      uncompleted_ids: [201, 202],
-    });
-  });
-
-  it("renders an offline raw todo status template", async () => {
-    const capture = captureIo();
-    const exitCode = await main(
-      ["node", "sharge", "calendar", "todos", "set-status", "--generate-input"],
-      {
-        env: {},
-        homeDir: tmpdir(),
-        cwd: tmpdir(),
-        platform: process.platform,
-      },
-      capture.io,
-    );
-
-    expect(exitCode).toBe(0);
-    expect(JSON.parse(capture.stdout())).toEqual({
-      event_ids: [],
-      status: "completed",
-    });
-  });
-
-  it.each([
-    ["empty IDs", '{"event_ids":[],"status":"completed"}', "--event-id"],
-    ["zero ID", '{"event_ids":[0],"status":"completed"}', "--event-id"],
-    ["bad status", '{"event_ids":[1],"status":"done"}', "--status"],
-    [
-      "unknown field",
-      '{"event_ids":[1],"status":"completed","completed_ids":[1]}',
-      "--input",
-    ],
-  ])("fast-fails todo input with %s", async (_name, input, field) => {
-    const homeDir = await mkdtemp(join(tmpdir(), "sharge-todo-invalid-"));
-    cleanupPaths.push(homeDir);
-    const capture = captureIo();
-
-    const exitCode = await main(
-      [
-        "node",
-        "sharge",
-        "calendar",
-        "todos",
-        "set-status",
-        "--input",
-        input,
-        "--dry-run",
-        "--json",
-      ],
-      {
-        env: { SHARGE_BASE_URL: "http://127.0.0.1:1" },
-        homeDir,
-        cwd: homeDir,
-        platform: process.platform,
-      },
-      capture.io,
-    );
-
-    expect(exitCode).toBe(2);
-    expect(JSON.parse(capture.stdout())).toMatchObject({
-      error: {
-        type: "INVALID_INPUT",
-        field,
-        nextActions: [
-          {
-            command: "sharge calendar todos set-status --help --json",
-          },
-        ],
-      },
-    });
-  });
-
-  it("sends one real todo PATCH and returns the backend result", async () => {
-    const requests: Array<{ method?: string; url?: string; body?: unknown }> =
-      [];
-    const server = await startServer(async (request, response) => {
-      requests.push({
-        method: request.method,
-        url: request.url,
-        body: await requestBody(request),
-      });
-      ok(response, {
-        completed_ids: [301, 302],
-        uncompleted_ids: [],
-      });
-    });
-    const homeDir = await setupHome(server.baseUrl);
-    const capture = captureIo();
-
-    try {
-      const exitCode = await main(
-        [
-          "node",
-          "sharge",
-          "calendar",
-          "todos",
-          "set-status",
-          "--event-id",
-          "301",
-          "--event-id",
-          "302",
-          "--status",
-          "completed",
-          "--json",
-        ],
-        {
-          env: {},
-          homeDir,
-          cwd: homeDir,
-          platform: process.platform,
-        },
-        capture.io,
-      );
-
-      expect(exitCode).toBe(0);
-      expect(requests).toEqual([
-        {
-          method: "PATCH",
-          url: "/open-api/v1/ai-calendar/todos/status",
-          body: {
-            completed_ids: [301, 302],
-            uncompleted_ids: [],
-          },
-        },
-      ]);
-      expect(JSON.parse(capture.stdout())).toMatchObject({
-        data: {
-          completed_ids: [301, 302],
-          uncompleted_ids: [],
-        },
-      });
-    } finally {
-      await server.close();
-    }
-  });
-
   it.each([
     [
       "delete",
       ["calendar", "delete", "123", "--yes", "--json"],
       "sharge calendar get 123 --json",
-    ],
-    [
-      "todo status",
-      [
-        "calendar",
-        "todos",
-        "set-status",
-        "--event-id",
-        "301",
-        "--event-id",
-        "302",
-        "--status",
-        "completed",
-        "--json",
-      ],
-      'for id in 301 302; do sharge calendar get "$id" --json; done',
     ],
   ])("returns one-shot unknown outcome for %s", async (_name, args, nextCommand) => {
     let requests = 0;
@@ -612,9 +372,8 @@ describe("calendar delete and todo status commands", () => {
     }
   });
 
-  it("exposes delete and todo status contracts through JSON help", async () => {
+  it("exposes delete contracts through JSON help", async () => {
     const deleteCapture = captureIo();
-    const todoCapture = captureIo();
     const runtime = {
       env: {},
       homeDir: tmpdir(),
@@ -629,36 +388,9 @@ describe("calendar delete and todo status commands", () => {
         deleteCapture.io,
       ),
     ).toBe(0);
-    expect(
-      await main(
-        [
-          "node",
-          "sharge",
-          "calendar",
-          "todos",
-          "set-status",
-          "--help",
-          "--json",
-        ],
-        runtime,
-        todoCapture.io,
-      ),
-    ).toBe(0);
-
     expect(JSON.parse(deleteCapture.stdout()).data).toMatchObject({
       command: "calendar.delete",
       destructive: true,
-      dryRun: true,
-      retrySafe: false,
-      requiredScopes: ["calendar:write"],
-    });
-    expect(JSON.parse(todoCapture.stdout()).data).toMatchObject({
-      command: "calendar.todos.set-status",
-      inputSchema: {
-        type: "object",
-        additionalProperties: false,
-        required: ["event_ids", "status"],
-      },
       dryRun: true,
       retrySafe: false,
       requiredScopes: ["calendar:write"],

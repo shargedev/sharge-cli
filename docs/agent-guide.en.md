@@ -116,7 +116,7 @@ Commands without `--input -` do not wait for stdin.
 
 ## 5. Write safety
 
-Consider a dry run for every write, especially Calendar create/update, recurring-instance edits, batch todo status, Notes update, and deletes. A dry run validates local input and produces a request plan. Remote resources, permissions, and conflicts remain `unverified`.
+Consider a dry run for every write, especially Calendar create/update, recurring-instance edits, Todos batch completion, Notes update, and deletes. A dry run validates local input and produces a request plan. Remote resources, permissions, and conflicts remain `unverified`.
 
 Actual deletion requires `--yes`:
 

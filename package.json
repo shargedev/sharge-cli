@@ -1,6 +1,6 @@
 {
   "name": "@sharge/cli",
-  "version": "0.2.4",
+  "version": "0.3.0-alpha.0",
   "description": "面向 Agent 的 Sharge Open Platform CLI",
   "license": "MIT",
   "type": "module",
@@ -50,7 +50,7 @@
   "dependencies": {
     "@jq-tools/jq": "^0.0.11",
     "lossless-json": "^4.3.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.12",

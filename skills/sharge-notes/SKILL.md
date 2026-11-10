@@ -44,5 +44,5 @@ sharge notes download --help --json
 ## Handoff
 
 - 鉴权、scope、配置、envelope 和通用恢复交给 [sharge-core](../sharge-core/SKILL.md)，恢复后回到本 Skill。
-- 用户明确要把 Note 内容创建为日程时，先完成最小必要读取，再把内容与 opaque Note ID 交给 [sharge-calendar](../sharge-calendar/SKILL.md)，由 Calendar 重新确认写入风险。
+- 用户明确要把 Note 内容创建为日程或待办时，先完成最小必要读取，再把内容与 opaque Note ID 交给 [sharge-calendar](../sharge-calendar/SKILL.md) 或 [sharge-todos](../sharge-todos/SKILL.md)，由目标 Skill 重新确认写入风险。
 - 录音与日记请求分别交给 [sharge-recordings](../sharge-recordings/SKILL.md)、[sharge-diary](../sharge-diary/SKILL.md)；不要把相似文本内容当作同一资源。

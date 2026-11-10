@@ -148,7 +148,7 @@ describe("calendar read commands", () => {
       expect(exitCode).toBe(0);
       expect(requests).toEqual([
         {
-          url: "/open-api/v1/ai-calendar/events/monthly?year=2026&month=7&timezone=Asia%2FShanghai&source_type=quick_note",
+          url: "/open-api/v1/ai-calendar/events/monthly?year=2026&month=7&timezone=Asia%2FShanghai&type=event&source_type=quick_note",
           clientDate: "2026-07-31T12:05:06+08:00",
         },
       ]);
@@ -226,7 +226,7 @@ describe("calendar read commands", () => {
 
       expect(exitCode).toBe(0);
       expect(requestedUrls).toEqual([
-        "/open-api/v1/ai-calendar/events/monthly?year=2026&month=3&timezone=America%2FNew_York",
+        "/open-api/v1/ai-calendar/events/monthly?year=2026&month=3&timezone=America%2FNew_York&type=event",
       ]);
       expect(JSON.parse(capture.stdout()).meta.timezone).toBe(
         "America/New_York",
@@ -340,7 +340,7 @@ describe("calendar read commands", () => {
 
       expect(exitCode).toBe(0);
       expect(requestedUrls).toEqual([
-        "/open-api/v1/ai-calendar/events?start=2026-07-31T23%3A00%3A00%2B08%3A00&end=2026-08-02T01%3A00%3A00%2B09%3A00&timezone=Asia%2FTokyo&source_type=all",
+        "/open-api/v1/ai-calendar/events?start=2026-07-31T23%3A00%3A00%2B08%3A00&end=2026-08-02T01%3A00%3A00%2B09%3A00&timezone=Asia%2FTokyo&type=event&source_type=all",
       ]);
       expect(JSON.parse(capture.stdout()).data).toEqual(data);
     } finally {
@@ -383,7 +383,7 @@ describe("calendar read commands", () => {
 
       expect(exitCode).toBe(0);
       expect(requestedUrls).toEqual([
-        "/open-api/v1/ai-calendar/events?start=2026-03-01T00%3A00%3A00-05%3A00&end=2026-04-01T00%3A00%3A00-04%3A00&timezone=America%2FNew_York",
+        "/open-api/v1/ai-calendar/events?start=2026-03-01T00%3A00%3A00-05%3A00&end=2026-04-01T00%3A00%3A00-04%3A00&timezone=America%2FNew_York&type=event",
       ]);
     } finally {
       await server.close();
@@ -465,7 +465,7 @@ describe("calendar read commands", () => {
       {
         id: 301,
         title: "发布评审",
-        type: "todo",
+        type: "event",
         matched_title: "<em>评审</em>",
         dynamic_search_field: "preserved",
       },
@@ -502,7 +502,7 @@ describe("calendar read commands", () => {
 
       expect(exitCode).toBe(0);
       expect(requestedUrls).toEqual([
-        "/open-api/v1/ai-calendar/events/search?keyword=%E8%AF%84%E5%AE%A1&source_type=manual&limit=20",
+        "/open-api/v1/ai-calendar/events/search?keyword=%E8%AF%84%E5%AE%A1&type=event&source_type=manual&limit=20",
       ]);
       expect(JSON.parse(capture.stdout()).data).toEqual(data);
     } finally {
@@ -675,7 +675,7 @@ describe("calendar read commands", () => {
 
       expect(exitCode).toBe(4);
       expect(requestedUrls).toEqual([
-        "/open-api/v1/ai-calendar/events/monthly?year=2026&month=7&timezone=Asia%2FShanghai",
+        "/open-api/v1/ai-calendar/events/monthly?year=2026&month=7&timezone=Asia%2FShanghai&type=event",
         "/open-api/v1/auth/status",
       ]);
       expect(JSON.parse(capture.stdout())).toMatchObject({
@@ -741,7 +741,7 @@ describe("calendar read commands", () => {
 
       expect(exitCode).toBe(8);
       expect(requestedUrls).toEqual([
-        "/open-api/v1/ai-calendar/events/monthly?year=2026&month=7&timezone=Asia%2FShanghai",
+        "/open-api/v1/ai-calendar/events/monthly?year=2026&month=7&timezone=Asia%2FShanghai&type=event",
       ]);
       expect(JSON.parse(capture.stdout())).toMatchObject({
         error: {
@@ -806,7 +806,7 @@ describe("calendar read commands", () => {
 
       expect(exitCode).toBe(8);
       expect(requestedUrls).toEqual([
-        "/open-api/v1/ai-calendar/events/monthly?year=2026&month=7&timezone=Asia%2FShanghai",
+        "/open-api/v1/ai-calendar/events/monthly?year=2026&month=7&timezone=Asia%2FShanghai&type=event",
         "/open-api/v1/auth/status",
       ]);
       expect(JSON.parse(capture.stdout())).toMatchObject({

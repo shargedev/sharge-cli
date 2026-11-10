@@ -65,7 +65,10 @@ jobs:
           package-manager-cache: false
       - name: Use trusted publishing npm version
         run: npm install --global npm@11.6.2
-      - name: Verify release tag
+      - name: Verify release tag and channel
+        id: policy
+        env:
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
         shell: bash
         run: |
           package_version="$(node -p 'require("./package.json").version')"
@@ -73,6 +76,21 @@ jobs:
             printf 'Release tag %s does not match package version %s.\n' "${GITHUB_REF_NAME}" "${package_version}" >&2
             exit 1
           fi
+          if [[ "${package_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+-alpha\.[0-9]+$ ]]; then
+            publish_tag=alpha
+            expected_prerelease=true
+          elif [[ "${package_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            publish_tag=latest
+            expected_prerelease=false
+          else
+            printf 'Unsupported prerelease version: %s\n' "${package_version}" >&2
+            exit 1
+          fi
+          if [[ "${RELEASE_PRERELEASE}" != "${expected_prerelease}" ]]; then
+            printf 'GitHub prerelease flag does not match version.\n' >&2
+            exit 1
+          fi
+          printf 'publish-tag=%s\n' "${publish_tag}" >> "${GITHUB_OUTPUT}"
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -89,6 +107,9 @@ jobs:
           package_version="$(node -p 'require("./package.json").version')"
           published_version="$(env -u NODE_AUTH_TOKEN npm view "@sharge/cli@${package_version}" version --registry=https://registry.npmjs.org 2>/dev/null || true)"
           printf 'package-version=%s\n' "${package_version}" >> "${GITHUB_OUTPUT}"
+          latest_before="$(env -u NODE_AUTH_TOKEN npm view @sharge/cli dist-tags.latest --registry=https://registry.npmjs.org)"
+          test -n "${latest_before}"
+          printf 'latest-before=%s\n' "${latest_before}" >> "${GITHUB_OUTPUT}"
           if [[ "${published_version}" == "${package_version}" ]]; then
             printf 'already-published=true\n' >> "${GITHUB_OUTPUT}"
           else
@@ -96,14 +117,22 @@ jobs:
           fi
       - name: Publish to npm with trusted publishing
         if: steps.registry.outputs.already-published != 'true'
-        run: env -u NODE_AUTH_TOKEN npm publish
+        run: env -u NODE_AUTH_TOKEN npm publish --tag "${{ steps.policy.outputs.publish-tag }}"
       - name: Verify registry version
         shell: bash
         run: |
           package_version="${{ steps.registry.outputs.package-version }}"
+          publish_tag="${{ steps.policy.outputs.publish-tag }}"
+          latest_before="${{ steps.registry.outputs.latest-before }}"
           for attempt in {1..12}; do
             published_version="$(env -u NODE_AUTH_TOKEN npm view "@sharge/cli@${package_version}" version --registry=https://registry.npmjs.org 2>/dev/null || true)"
-            if [[ "${published_version}" == "${package_version}" ]]; then
+            channel_version="$(env -u NODE_AUTH_TOKEN npm view "@sharge/cli" "dist-tags.${publish_tag}" --registry=https://registry.npmjs.org 2>/dev/null || true)"
+            latest_after="$(env -u NODE_AUTH_TOKEN npm view @sharge/cli dist-tags.latest --registry=https://registry.npmjs.org 2>/dev/null || true)"
+            if [[ "${publish_tag}" == alpha && -n "${latest_after}" && "${latest_after}" != "${latest_before}" ]]; then
+              printf 'Alpha release changed latest dist-tag.\n' >&2
+              exit 1
+            fi
+            if [[ "${published_version}" == "${package_version}" && "${channel_version}" == "${package_version}" && ( "${publish_tag}" != alpha || "${latest_after}" == "${latest_before}" ) ]]; then
               exit 0
             fi
             if [[ "${attempt}" -lt 12 ]]; then

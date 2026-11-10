@@ -9,7 +9,7 @@
 
 Sharge Open Platform 的官方命令行客户端，面向 AI Agent 设计，也为人类提供清晰的登录、配置与故障处理体验。
 
-它目前覆盖 AI Live Photo(闪记)、日程、录音和 AI 日记，提供机器可读 help、稳定 JSON 契约、显式 dry run、安全下载与可恢复错误。
+它目前覆盖 AI Live Photo(闪记)、日程、待办、录音和 AI 日记，提供机器可读 help、稳定 JSON 契约、显式 dry run、安全下载与可恢复错误。
 
 [官网](https://shargedev.github.io/sharge-cli/) · [在线文档](https://shargedev.github.io/sharge-cli/docs/) · [快速开始](#安装与快速开始) · [Agent 使用](#agent-快速开始) · [核心能力](#核心能力) · [命令](#命令概览) · [安全](#安全与风险) · [仓库文档](./docs/README.md)
 
@@ -27,7 +27,8 @@ Sharge Open Platform 的官方命令行客户端，面向 AI Agent 设计，也�
 | 领域 | 能力 |
 | --- | --- |
 | AI Live Photo(闪记)（`notes`） | 列表、搜索、详情、更新、删除和媒体下载 |
-| 日程（`calendar`） | 月视图、范围读取、搜索、详情、创建、更新、删除和待办状态 |
+| 日程（`calendar`） | 月视图、范围读取、搜索、详情、创建、更新、删除 |
+| 待办（`todos`） | 单页列表、详情、新建、局部修改、批量完成和删除 |
 | 录音（`recordings`） | 列表、搜索、富详情和音频下载 |
 | AI 日记（`diary`） | 按月读取、搜索和日记详情 |
 | 鉴权与配置 | 浏览器登录、scope、诊断、配置和脱敏日志 |
@@ -134,7 +135,7 @@ sharge
 ├── logs path|clear
 ├── notes list|search|get|update|delete|download
 ├── calendar month|list|search|get|create|update|delete
-├── calendar todos set-status
+├── todos list|get|create|update|complete|delete
 ├── recordings list|search|get|download
 └── diary list|search|get
 ```
@@ -189,11 +190,12 @@ API Key 不限制前缀或 token 形态，有效性由目标服务端判断。CL
 
 ## Agent Skills
 
-仓库在 [`skills/`](./skills) 提供五个与当前 CLI 对齐的 Agent Skill：
+仓库在 [`skills/`](./skills) 提供六个与当前 CLI 对齐的 Agent Skill：
 
 - `sharge-core`
 - `sharge-notes`
 - `sharge-calendar`
+- `sharge-todos`
 - `sharge-recordings`
 - `sharge-diary`
 
@@ -203,7 +205,7 @@ API Key 不限制前缀或 token 形态，有效性由目标服务端判断。CL
 npm run skills:validate
 ```
 
-npm 包内的 `skills/` 随同版 CLI 交付五组 Skills。全局安装后位于 `$(npm root -g)/@sharge/cli/skills/`，可从本地包为 Agent 安装：
+npm 包内的 `skills/` 随同版 CLI 交付六组 Skills。全局安装后位于 `$(npm root -g)/@sharge/cli/skills/`，可从本地包为 Agent 安装：
 
 ```sh
 npx skills add "$(npm root -g)/@sharge/cli" -y -g
